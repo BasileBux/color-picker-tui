@@ -1,5 +1,5 @@
-use hsv::hsv_to_rgb;
-use std::io::{self, Write, stdout};
+use palette::{FromColor, Hsv, RgbHue, SetHue, Srgb};
+use std::io::{self, stdout};
 use tui_color_picker::types::*;
 
 use crossterm::{
@@ -39,8 +39,10 @@ impl Drop for Cleanup {
     }
 }
 
-fn draw_value_display(pos: Vec2, color: &HSV) -> io::Result<()> {
-    let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
+fn draw_value_display(pos: Vec2, color: &Hsv) -> io::Result<()> {
+    let (r, g, b) = Srgb::from_color(*color)
+        .into_format::<u8>()
+        .into_components();
     execute!(
         stdout(),
         MoveTo(pos.x as u16, pos.y as u16),
@@ -59,9 +61,9 @@ fn draw_value_display(pos: Vec2, color: &HSV) -> io::Result<()> {
             g,
             b,
             SPACE,
-            color.h,
-            color.s * 100.0,
-            color.v * 100.0
+            color.hue.into_positive_degrees(),
+            color.saturation * 100.0,
+            color.value * 100.0
         ))
     )?;
     Ok(())
@@ -111,7 +113,7 @@ fn main() -> io::Result<()> {
                             && x >= 0
                             && y >= 0
                         {
-                            sv_picker.hue = hue;
+                            sv_picker.hue_degrees = hue;
                             let color = sv_picker.get_current();
                             draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;
                             inputs.draw(&color)?;
@@ -147,38 +149,43 @@ fn main() -> io::Result<()> {
                             let mut color = sv_picker.get_current();
                             match focus {
                                 inputs::Focus::Hex => {
-                                    let r = ((value >> 16) & 0xFF) as u8;
-                                    let g = ((value >> 8) & 0xFF) as u8;
-                                    let b = (value & 0xFF) as u8;
+                                    // let r = ((value >> 16) & 0xFF) as u8;
+                                    // let g = ((value >> 8) & 0xFF) as u8;
+                                    // let b = (value & 0xFF) as u8;
                                     // color = hsv::rgb_to_hsv(r, g, b);
                                 }
                                 inputs::Focus::R => {
-                                    let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
-                                    let new_r = value.min(255) as u8;
-                                    // color = hsv::rgb_to_hsv(new_r, g, b);
+                                    // let (r, g, b) = Srgb::from_color(color)
+                                    //     .into_format::<u8>()
+                                    //     .into_components();
+
                                 }
                                 inputs::Focus::G => {
-                                    let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
-                                    let new_g = value.min(255) as u8;
+                                    // let (r, g, b) = Srgb::from_color(color)
+                                    //     .into_format::<u8>()
+                                    //     .into_components();
+                                    // let new_g = value.min(255) as u8;
                                     // color = hsv::rgb_to_hsv(r, new_g, b);
                                 }
                                 inputs::Focus::B => {
-                                    let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
-                                    let new_b = value.min(255) as u8;
+                                    // let (r, g, b) = Srgb::from_color(color)
+                                    //     .into_format::<u8>()
+                                    //     .into_components();
+                                    // let new_b = value.min(255) as u8;
                                     // color = hsv::rgb_to_hsv(r, g, new_b);
                                 }
                                 inputs::Focus::H => {
-                                    color.h = (value % 360) as f64;
+                                    color.set_hue(RgbHue::from_degrees((value % 360) as f32));
                                 }
                                 inputs::Focus::S => {
-                                    color.s = (value.min(100) as f64) / 100.0;
+                                    color.saturation = (value.min(100) as f32) / 100.0;
                                 }
                                 inputs::Focus::V => {
-                                    color.v = (value.min(100) as f64) / 100.0;
+                                    color.value = (value.min(100) as f32) / 100.0;
                                 }
                                 _ => {}
                             }
-                            sv_picker.hue = color.h;
+                            sv_picker.hue_degrees = color.hue.into_positive_degrees();
                             hue_picker.draw()?;
                             sv_picker.draw()?;
                             draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;

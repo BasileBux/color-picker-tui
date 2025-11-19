@@ -1,3 +1,4 @@
+use palette::{FromColor, Hsv, Srgb};
 use std::io::{self, Write, stdout};
 use tui_color_picker::types::*;
 
@@ -9,7 +10,6 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetForegroundColor},
     terminal::{Clear, ClearType},
 };
-use hsv::hsv_to_rgb;
 
 const CB_HEIGHT: u16 = 4;
 const CB_WIDTH: u16 = 16;
@@ -87,12 +87,18 @@ impl Inputs {
         }
     }
 
-    pub fn draw(&mut self, color: &HSV) -> io::Result<()> {
+    pub fn draw(&mut self, color: &Hsv) -> io::Result<()> {
         self.buf.clear();
-        let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
+        let (r, g, b) = Srgb::from_color(*color)
+            .into_format::<u8>()
+            .into_components();
         self.buf
             .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
-        self.buf.queue(SetForegroundColor(Color::Rgb { r, g, b }))?;
+        self.buf.queue(SetForegroundColor(Color::Rgb {
+            r: r,
+            g: g,
+            b: b,
+        }))?;
         for _ in 0..CB_HEIGHT {
             self.buf.queue(Print(
                 format!("{}", FULL_CELL_BLOCK).repeat(CB_WIDTH as usize),
@@ -101,8 +107,10 @@ impl Inputs {
             self.buf.queue(MoveLeft(CB_WIDTH))?;
         }
         self.buf.queue(ResetColor)?;
-        self.buf
-            .queue(Print(format!("#{:02x}{:02x}{:02x}", r, g, b)))?;
+        self.buf.queue(Print(format!(
+            "#{:02x}{:02x}{:02x}",
+            r, g, b
+        )))?;
         self.buf.queue(MoveLeft(7))?;
         self.buf.queue(MoveDown(2))?;
 
@@ -116,15 +124,18 @@ impl Inputs {
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(2))?;
 
-        self.buf.queue(Print(format!("H {:>3.0}", color.h)))?;
+        self.buf.queue(Print(format!(
+            "H {:>3.0}",
+            color.hue.into_positive_degrees()
+        )))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
         self.buf
-            .queue(Print(format!("S {:>3.0}", color.s * 100.0)))?;
+            .queue(Print(format!("S {:>3.0}", color.saturation * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
         self.buf
-            .queue(Print(format!("V {:>3.0}", color.v * 100.0)))?;
+            .queue(Print(format!("V {:>3.0}", color.value * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
@@ -164,12 +175,8 @@ impl Inputs {
             self.modified = false;
             let _ = self.lose_focus();
             let value = match focus {
-                Focus::Hex => {
-                    u16::from_str_radix(&self.input_str, 16).unwrap_or(0)
-                }
-                _ => {
-                    self.input_str.parse::<u16>().unwrap_or(0)
-                }
+                Focus::Hex => u16::from_str_radix(&self.input_str, 16).unwrap_or(0),
+                _ => self.input_str.parse::<u16>().unwrap_or(0),
             };
             return Some((focus, value));
         }
@@ -220,8 +227,11 @@ impl Inputs {
         return None;
     }
 
-    pub fn gain_focus(&mut self, color: &HSV) -> io::Result<()> {
-        let (r, g, b) = hsv_to_rgb(color.h, color.s, color.v);
+    pub fn gain_focus(&mut self, color: &Hsv) -> io::Result<()> {
+        let (r, g, b) = Srgb::from_color(*color)
+            .into_format::<u8>()
+            .into_components();
+
         match self.focus {
             Focus::Hex => {
                 self.input_str = format!("{:02x}{:02x}{:02x}", r, g, b);
@@ -236,13 +246,13 @@ impl Inputs {
                 self.input_str = format!("{:>3}", b);
             }
             Focus::H => {
-                self.input_str = format!("{:>3.0}", color.h);
+                self.input_str = format!("{:>3.0}", color.hue.into_positive_degrees());
             }
             Focus::S => {
-                self.input_str = format!("{:>3.0}", color.s * 100.0);
+                self.input_str = format!("{:>3.0}", color.saturation * 100.0);
             }
             Focus::V => {
-                self.input_str = format!("{:>3.0}", color.v * 100.0);
+                self.input_str = format!("{:>3.0}", color.value * 100.0);
             }
             Focus::NONE => self.input_str.clear(),
         };
