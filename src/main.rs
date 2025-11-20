@@ -1,30 +1,35 @@
-use palette::{FromColor, Hsv, RgbHue, SetHue, Srgb};
-use std::io::{self, stdout};
+use palette::{Hsv, RgbHue, SetHue};
+use std::io::{self, Write, stdout};
 use tui_color_picker::types::*;
 
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::*,
     execute,
-    style::{Color, Print, ResetColor, SetForegroundColor},
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::*,
 };
 use std::time::Duration;
+use tui_color_picker::constants::*;
+use tui_color_picker::utils::{hsv_from_rgb, rgb_from_hsv};
 mod hue_picker;
 mod inputs;
 mod sv_picker;
 
-const SPACE: &str = "   ";
-
-const SV_PICKER_HEIGHT: u32 = 25;
-const SV_PICKER_WIDTH: u32 = 50;
-const HUE_PICKER_HEIGHT: u32 = SV_PICKER_HEIGHT;
-const HUE_PICKER_WIDTH: u32 = 5;
-
 fn setup() -> io::Result<()> {
-    let _ = execute!(stdout(), Hide).unwrap();
-    let _ = execute!(stdout(), EnterAlternateScreen).unwrap();
-    let _ = execute!(stdout(), EnableMouseCapture).unwrap();
+    execute!(
+        stdout(),
+        Hide,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        SetBackgroundColor(Color::Rgb {
+            r: BACKGROUND_COLOR.r,
+            g: BACKGROUND_COLOR.g,
+            b: BACKGROUND_COLOR.b
+        }),
+        Clear(ClearType::All)
+    )?;
+    stdout().flush()?;
     enable_raw_mode()?;
     Ok(())
 }
@@ -32,17 +37,14 @@ fn setup() -> io::Result<()> {
 struct Cleanup;
 impl Drop for Cleanup {
     fn drop(&mut self) {
-        let _ = execute!(stdout(), DisableMouseCapture);
-        let _ = execute!(stdout(), LeaveAlternateScreen);
-        let _ = execute!(stdout(), Show);
+        let _ = execute!(stdout(), DisableMouseCapture, LeaveAlternateScreen, Show);
+        let _ = stdout().flush();
         let _ = disable_raw_mode();
     }
 }
 
-fn draw_value_display(pos: Vec2, color: &Hsv) -> io::Result<()> {
-    let (r, g, b) = Srgb::from_color(*color)
-        .into_format::<u8>()
-        .into_components();
+fn draw_value_display(pos: &Vec2, color: &Hsv) -> io::Result<()> {
+    let (r, g, b) = rgb_from_hsv(color);
     execute!(
         stdout(),
         MoveTo(pos.x as u16, pos.y as u16),
@@ -50,6 +52,11 @@ fn draw_value_display(pos: Vec2, color: &Hsv) -> io::Result<()> {
         SetForegroundColor(Color::Rgb { r, g, b }),
         Print(format!("{}", FULL_CELL_BLOCK).repeat(8)),
         ResetColor,
+        SetBackgroundColor(Color::Rgb {
+            r: BACKGROUND_COLOR.r,
+            g: BACKGROUND_COLOR.g,
+            b: BACKGROUND_COLOR.b,
+        }),
         Print(format!(
             "{}HEX: #{:02x}{:02x}{:02x}{}RGB: {:>3}, {:>3}, {:>3}{}HSL: {:>3.0}, {:>3.2}%, {:>3.2}%",
             SPACE,
@@ -69,22 +76,70 @@ fn draw_value_display(pos: Vec2, color: &Hsv) -> io::Result<()> {
     Ok(())
 }
 
+fn compute_offset(term_width: u16, term_height: u16) -> Vec2 {
+    let offset_x = (term_width as i16 - TOTAL_WIDTH as i16) / 2;
+    let offset_y = (term_height as i16 - TOTAL_HEIGHT as i16) / 2;
+    Vec2 {
+        x: offset_x.max(0) as u32,
+        y: offset_y.max(0) as u32,
+    }
+}
+
+fn offset_all(
+    sv_picker: &mut sv_picker::SVPicker,
+    hue_picker: &mut hue_picker::HuePicker,
+    inputs: &mut inputs::Inputs,
+    offset: &Vec2,
+) {
+    // Move all components by offset
+    inputs.pos = INPUTS_REL_POS + *offset;
+    sv_picker.pos = SV_PICKER_REL_POS + *offset;
+    hue_picker.pos = HUE_PICKER_REL_POS + *offset;
+}
+
+// Temp function to draw all components without any offset
+fn draw_all(
+    sv_picker: &mut sv_picker::SVPicker,
+    hue_picker: &mut hue_picker::HuePicker,
+    inputs: &mut inputs::Inputs,
+    offset: &Vec2,
+) -> io::Result<()> {
+    sv_picker.draw()?;
+    hue_picker.draw()?;
+    draw_value_display(
+        &(VALUE_DISPLAY_REL_POS + *offset),
+        &sv_picker.selected_color,
+    )?;
+    inputs.draw(&sv_picker.selected_color)?;
+    Ok(())
+}
+
 fn main() -> io::Result<()> {
     setup()?;
     let _clean = Cleanup;
 
-    let mut sv_picker =
-        sv_picker::SVPicker::new(Vec2 { x: 0, y: 6 }, SV_PICKER_WIDTH, SV_PICKER_HEIGHT);
-    let mut hue_picker =
-        hue_picker::HuePicker::new(Vec2 { x: 53, y: 6 }, HUE_PICKER_WIDTH, HUE_PICKER_HEIGHT);
-    let mut inputs = inputs::Inputs::new(Vec2 { x: 60, y: 6 });
-    sv_picker.draw()?;
-    hue_picker.draw()?;
+    let (term_width, term_height) = crossterm::terminal::size()?;
+    let offset = compute_offset(term_width, term_height);
 
-    if let Ok(color) = sv_picker.get(sv_picker.selected_pos.x, sv_picker.selected_pos.y) {
-        draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;
-        inputs.draw(&color)?;
-    }
+    let mut sv_picker = sv_picker::SVPicker::new(
+        SV_PICKER_REL_POS + offset,
+        SV_PICKER_WIDTH,
+        SV_PICKER_HEIGHT,
+    );
+    let mut hue_picker = hue_picker::HuePicker::new(
+        HUE_PICKER_REL_POS + offset,
+        HUE_PICKER_WIDTH,
+        HUE_PICKER_HEIGHT,
+    );
+    let mut inputs = inputs::Inputs::new(INPUTS_REL_POS + offset);
+
+    // draw_all(&mut sv_picker, &mut hue_picker, &mut inputs)?;
+    draw_all(
+        &mut sv_picker,
+        &mut hue_picker,
+        &mut inputs,
+        &offset,
+    )?;
 
     loop {
         if poll(Duration::from_millis(100))? {
@@ -95,48 +150,45 @@ fn main() -> io::Result<()> {
                     {
                         let x = event.column as i16 - sv_picker.pos.x as i16;
                         let y = event.row as i16 - sv_picker.pos.y as i16;
-                        if let Ok(color) = sv_picker.get(x as u32, y as u32)
+                        if let Ok(()) = sv_picker.set_selected_color(Vec2 {
+                            x: x as u32,
+                            y: y as u32,
+                        }) && y >= 0
                             && x >= 0
-                            && y >= 0
                         {
-                            sv_picker.selected_pos = Vec2 {
-                                x: x as u32,
-                                y: y as u32,
-                            };
-                            draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;
-                            inputs.draw(&color)?;
+                            draw_value_display(
+                                &(VALUE_DISPLAY_REL_POS + offset),
+                                &sv_picker.selected_color,
+                            )?;
+                            inputs.draw(&sv_picker.selected_color)?;
                         }
 
                         let x = event.column as i16 - hue_picker.pos.x as i16;
                         let y = event.row as i16 - hue_picker.pos.y as i16;
+
                         if let Ok(hue) = hue_picker.get(x as u32, y as u32)
                             && x >= 0
                             && y >= 0
                         {
-                            sv_picker.hue_degrees = hue;
-                            let color = sv_picker.get_current();
-                            draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;
-                            inputs.draw(&color)?;
+                            sv_picker.set_hue(hue);
+                            draw_value_display(
+                                &(VALUE_DISPLAY_REL_POS + offset),
+                                &sv_picker.selected_color,
+                            )?;
+                            inputs.draw(&sv_picker.selected_color)?;
                             sv_picker.draw()?;
                         }
 
                         let x = event.column as i16 - inputs.pos.x as i16;
                         let y = event.row as i16 - inputs.pos.y as i16;
-                        if x <= 0 || y <= 0 {
-                            if !inputs.lose_focus() {
-                                // BUG: This doesn't work and doesn't redraw the inputs
-                                let color = sv_picker.get_current();
-                                inputs.draw(&color)?;
-                            }
-                            continue;
-                        }
-                        if let Ok(()) = inputs.mouse_click(x as u16, y as u16) {
-                            // Call input management function
-                            if let Ok(color) =
-                                sv_picker.get(sv_picker.selected_pos.x, sv_picker.selected_pos.y)
-                            {
-                                inputs.gain_focus(&color)?;
-                            }
+                        if let Ok(()) = inputs.mouse_click(x as u16, y as u16)
+                            && x >= 0
+                            && y >= 0
+                        {
+                            inputs.gain_focus(&sv_picker.selected_color)?;
+                        } else {
+                            let _ = inputs.lose_focus();
+                            inputs.draw(&sv_picker.selected_color)?;
                         }
                     }
                 }
@@ -146,53 +198,77 @@ fn main() -> io::Result<()> {
                     }
                     match inputs.value_input(event.code) {
                         Some((focus, value)) => {
-                            let mut color = sv_picker.get_current();
                             match focus {
                                 inputs::Focus::Hex => {
-                                    // let r = ((value >> 16) & 0xFF) as u8;
-                                    // let g = ((value >> 8) & 0xFF) as u8;
-                                    // let b = (value & 0xFF) as u8;
-                                    // color = hsv::rgb_to_hsv(r, g, b);
+                                    let r = ((value >> 16) & 0xFF) as u8;
+                                    let g = ((value >> 8) & 0xFF) as u8;
+                                    let b = (value & 0xFF) as u8;
+                                    sv_picker.selected_color = hsv_from_rgb(r, g, b)
                                 }
                                 inputs::Focus::R => {
-                                    // let (r, g, b) = Srgb::from_color(color)
-                                    //     .into_format::<u8>()
-                                    //     .into_components();
-
+                                    let (_, g, b) = rgb_from_hsv(&sv_picker.selected_color);
+                                    let r = value.min(255) as u8;
+                                    sv_picker.selected_color = hsv_from_rgb(r, g, b)
                                 }
                                 inputs::Focus::G => {
-                                    // let (r, g, b) = Srgb::from_color(color)
-                                    //     .into_format::<u8>()
-                                    //     .into_components();
-                                    // let new_g = value.min(255) as u8;
-                                    // color = hsv::rgb_to_hsv(r, new_g, b);
+                                    let (r, _, b) = rgb_from_hsv(&sv_picker.selected_color);
+                                    let g = value.min(255) as u8;
+                                    sv_picker.selected_color = hsv_from_rgb(r, g, b)
                                 }
                                 inputs::Focus::B => {
-                                    // let (r, g, b) = Srgb::from_color(color)
-                                    //     .into_format::<u8>()
-                                    //     .into_components();
-                                    // let new_b = value.min(255) as u8;
-                                    // color = hsv::rgb_to_hsv(r, g, new_b);
+                                    let (r, g, _) = rgb_from_hsv(&sv_picker.selected_color);
+                                    let b = value.min(255) as u8;
+                                    sv_picker.selected_color = hsv_from_rgb(r, g, b)
                                 }
                                 inputs::Focus::H => {
-                                    color.set_hue(RgbHue::from_degrees((value % 360) as f32));
+                                    sv_picker
+                                        .selected_color
+                                        .set_hue(RgbHue::from_degrees(value as f32));
                                 }
                                 inputs::Focus::S => {
-                                    color.saturation = (value.min(100) as f32) / 100.0;
+                                    sv_picker.selected_color.saturation =
+                                        (value.min(100) as f32) / 100.0;
                                 }
                                 inputs::Focus::V => {
-                                    color.value = (value.min(100) as f32) / 100.0;
+                                    sv_picker.selected_color.value =
+                                        (value.min(100) as f32) / 100.0;
                                 }
                                 _ => {}
                             }
-                            sv_picker.hue_degrees = color.hue.into_positive_degrees();
                             hue_picker.draw()?;
                             sv_picker.draw()?;
-                            draw_value_display(Vec2 { x: 0, y: 4 }, &color)?;
-                            inputs.draw(&color)?;
+                            draw_value_display(
+                                &(VALUE_DISPLAY_REL_POS + offset),
+                                &sv_picker.selected_color,
+                            )?;
+                            inputs.draw(&sv_picker.selected_color)?;
                         }
                         None => {}
                     }
+                }
+                Event::Resize(x, y) => {
+                    if x < (TOTAL_WIDTH + 2) as u16 || y < (TOTAL_HEIGHT + 2) as u16 {
+                        // TODO: Show warning about terminal being too small, don't draw the UI and
+                        // set some flag to avoid managing inputs for invalid state
+                        continue;
+                    }
+                    offset_all(
+                        &mut sv_picker,
+                        &mut hue_picker,
+                        &mut inputs,
+                        &compute_offset(x, y),
+                    );
+                    execute!(
+                        stdout(),
+                        SetBackgroundColor(Color::Rgb {
+                            r: BACKGROUND_COLOR.r,
+                            g: BACKGROUND_COLOR.g,
+                            b: BACKGROUND_COLOR.b
+                        }),
+                        Clear(ClearType::All)
+                    )?;
+                    stdout().flush()?;
+                    draw_all(&mut sv_picker, &mut hue_picker, &mut inputs, &offset)?;
                 }
                 _ => {}
             }

@@ -1,18 +1,16 @@
-use palette::{FromColor, Hsv, Srgb};
+use palette::Hsv;
 use std::io::{self, Write, stdout};
 use tui_color_picker::types::*;
+use tui_color_picker::constants::*;
 
 use crossterm::{
     QueueableCommand,
     cursor::{Hide, MoveDown, MoveLeft, MoveTo, Show},
     event::KeyCode,
     execute,
-    style::{Color, Print, ResetColor, SetForegroundColor},
-    terminal::{Clear, ClearType},
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
 };
-
-const CB_HEIGHT: u16 = 4;
-const CB_WIDTH: u16 = 16;
+use tui_color_picker::utils::rgb_from_hsv;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Focus {
@@ -29,13 +27,13 @@ pub enum Focus {
 impl Focus {
     pub fn value(&self) -> u16 {
         match self {
-            Focus::Hex => CB_HEIGHT,
-            Focus::R => CB_HEIGHT + 2,
-            Focus::G => CB_HEIGHT + 3,
-            Focus::B => CB_HEIGHT + 4,
-            Focus::H => CB_HEIGHT + 6,
-            Focus::S => CB_HEIGHT + 7,
-            Focus::V => CB_HEIGHT + 8,
+            Focus::Hex => INPUTS_CB_HEIGHT,
+            Focus::R => INPUTS_CB_HEIGHT + 2,
+            Focus::G => INPUTS_CB_HEIGHT + 3,
+            Focus::B => INPUTS_CB_HEIGHT + 4,
+            Focus::H => INPUTS_CB_HEIGHT + 6,
+            Focus::S => INPUTS_CB_HEIGHT + 7,
+            Focus::V => INPUTS_CB_HEIGHT + 8,
             Focus::NONE => 0,
         }
     }
@@ -68,18 +66,17 @@ impl Focus {
 }
 
 pub struct Inputs {
-    pub pos: Vec2,
-    pub focus: Focus,
     pub buf: Vec<u8>,
-
+    pub pos: Vec2,
     input_str: String,
-    modified: bool,
+    pub focus: Focus,
+    pub modified: bool,
 }
 
 impl Inputs {
     pub fn new(pos: Vec2) -> Inputs {
         Inputs {
-            pos: pos,
+            pos,
             focus: Focus::NONE,
             buf: Vec::with_capacity(128 * 8),
             input_str: String::with_capacity(8),
@@ -89,37 +86,42 @@ impl Inputs {
 
     pub fn draw(&mut self, color: &Hsv) -> io::Result<()> {
         self.buf.clear();
-        let (r, g, b) = Srgb::from_color(*color)
-            .into_format::<u8>()
-            .into_components();
+        let (r, g, b) = rgb_from_hsv(&color);
         self.buf
             .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
-        self.buf.queue(SetForegroundColor(Color::Rgb {
-            r: r,
-            g: g,
-            b: b,
-        }))?;
-        for _ in 0..CB_HEIGHT {
+        self.buf
+            .queue(SetForegroundColor(Color::Rgb { r: r, g: g, b: b }))?;
+
+        // Draw color block
+        for _ in 0..INPUTS_CB_HEIGHT {
             self.buf.queue(Print(
-                format!("{}", FULL_CELL_BLOCK).repeat(CB_WIDTH as usize),
+                format!("{}", FULL_CELL_BLOCK).repeat(INPUTS_CB_WIDTH as usize),
             ))?;
             self.buf.queue(MoveDown(1))?;
-            self.buf.queue(MoveLeft(CB_WIDTH))?;
+            self.buf.queue(MoveLeft(INPUTS_CB_WIDTH))?;
         }
+
         self.buf.queue(ResetColor)?;
-        self.buf.queue(Print(format!(
-            "#{:02x}{:02x}{:02x}",
-            r, g, b
-        )))?;
+        self.buf.queue(SetBackgroundColor(Color::Rgb {
+            r: BACKGROUND_COLOR.r,
+            g: BACKGROUND_COLOR.g,
+            b: BACKGROUND_COLOR.b,
+        }))?;
+
+        // Draw values
+        self.buf
+            .queue(Print(format!("#{:02x}{:02x}{:02x}", r, g, b)))?;
         self.buf.queue(MoveLeft(7))?;
         self.buf.queue(MoveDown(2))?;
 
         self.buf.queue(Print(format!("R {:>3}", r)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
+
         self.buf.queue(Print(format!("G {:>3}", g)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
+
         self.buf.queue(Print(format!("B {:>3}", b)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(2))?;
@@ -130,10 +132,12 @@ impl Inputs {
         )))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
+
         self.buf
             .queue(Print(format!("S {:>3.0}", color.saturation * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
+
         self.buf
             .queue(Print(format!("V {:>3.0}", color.value * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
@@ -145,7 +149,7 @@ impl Inputs {
     }
 
     pub fn mouse_click(&mut self, x: u16, y: u16) -> Result<(), ()> {
-        if x >= 7 || y < CB_HEIGHT || y >= Focus::V.value() + 1 {
+        if x >= 7 || y < INPUTS_CB_HEIGHT || y >= Focus::V.value() + 1 {
             // 7 is the length of "#RRGGBB"
             let _ = self.lose_focus();
             return Err(());
@@ -159,14 +163,13 @@ impl Inputs {
             y if y == Focus::S.value() => Focus::S,
             y if y == Focus::V.value() => Focus::V,
             _ => {
-                let _ = self.lose_focus();
                 return Err(());
             }
         };
         Ok(())
     }
 
-    pub fn value_input(&mut self, input: KeyCode) -> Option<(Focus, u16)> {
+    pub fn value_input(&mut self, input: KeyCode) -> Option<(Focus, u32)> {
         if self.focus == Focus::NONE {
             return None;
         }
@@ -175,8 +178,8 @@ impl Inputs {
             self.modified = false;
             let _ = self.lose_focus();
             let value = match focus {
-                Focus::Hex => u16::from_str_radix(&self.input_str, 16).unwrap_or(0),
-                _ => self.input_str.parse::<u16>().unwrap_or(0),
+                Focus::Hex => u32::from_str_radix(&self.input_str, 16).unwrap_or(0),
+                _ => self.input_str.parse::<u32>().unwrap_or(0),
             };
             return Some((focus, value));
         }
@@ -228,10 +231,7 @@ impl Inputs {
     }
 
     pub fn gain_focus(&mut self, color: &Hsv) -> io::Result<()> {
-        let (r, g, b) = Srgb::from_color(*color)
-            .into_format::<u8>()
-            .into_components();
-
+        let (r, g, b) = rgb_from_hsv(&color);
         match self.focus {
             Focus::Hex => {
                 self.input_str = format!("{:02x}{:02x}{:02x}", r, g, b);
@@ -276,8 +276,6 @@ impl Inputs {
     // Returns true if value was applied, false if lost focus without applying
     pub fn lose_focus(&mut self) -> bool {
         self.focus = Focus::NONE;
-        // TODO: reset value if modified but not applied
-        // check self.modified for that
         let _ = execute!(stdout(), Hide);
         let _ = stdout().flush();
         return !self.modified;
