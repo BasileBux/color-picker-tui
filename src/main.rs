@@ -91,13 +91,11 @@ fn offset_all(
     inputs: &mut inputs::Inputs,
     offset: &Vec2,
 ) {
-    // Move all components by offset
     inputs.pos = INPUTS_REL_POS + *offset;
     sv_picker.pos = SV_PICKER_REL_POS + *offset;
     hue_picker.pos = HUE_PICKER_REL_POS + *offset;
 }
 
-// Temp function to draw all components without any offset
 fn draw_all(
     sv_picker: &mut sv_picker::SVPicker,
     hue_picker: &mut hue_picker::HuePicker,
@@ -133,13 +131,7 @@ fn main() -> io::Result<()> {
     );
     let mut inputs = inputs::Inputs::new(INPUTS_REL_POS + offset);
 
-    // draw_all(&mut sv_picker, &mut hue_picker, &mut inputs)?;
-    draw_all(
-        &mut sv_picker,
-        &mut hue_picker,
-        &mut inputs,
-        &offset,
-    )?;
+    draw_all(&mut sv_picker, &mut hue_picker, &mut inputs, &offset)?;
 
     loop {
         if poll(Duration::from_millis(100))? {

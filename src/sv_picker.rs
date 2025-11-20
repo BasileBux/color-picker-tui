@@ -59,7 +59,7 @@ impl SVPicker {
             pixel = Hsv::new(
                 pixel.hue.into_positive_degrees(),
                 0.0,
-                pixel.value - self.value_step as f32,
+                pixel.value - (self.value_step * 2.0) as f32,
             );
             self.buf.queue(MoveLeft(self.width as u16))?;
             self.buf.queue(MoveDown(1))?;
