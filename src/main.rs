@@ -208,7 +208,12 @@ fn main() -> io::Result<()> {
                             )?;
                             inputs.draw(&sv_picker.selected_color)?;
                         }
-                        None => {}
+                        None => {
+                            if inputs.focus == inputs::Focus::NONE {
+                                let _ = inputs.lose_focus();
+                                inputs.draw(&sv_picker.selected_color)?;
+                            }
+                        }
                     }
                 }
                 Event::Resize(x, y) => {
@@ -230,12 +235,7 @@ fn main() -> io::Result<()> {
                     }
                     term_too_small = false;
                     offset = compute_offset(x, y);
-                    offset_all(
-                        &mut sv_picker,
-                        &mut hue_picker,
-                        &mut inputs,
-                        &offset,
-                    );
+                    offset_all(&mut sv_picker, &mut hue_picker, &mut inputs, &offset);
                     execute!(
                         stdout(),
                         SetBackgroundColor(Color::Rgb {

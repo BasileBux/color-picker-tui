@@ -184,6 +184,11 @@ impl Inputs {
             return Some((focus, value));
         }
 
+        if input.is_esc() {
+            self.focus = Focus::NONE;
+            return None;
+        }
+
         if input.is_backspace() {
             self.modified = true;
             if self.input_str.len() > 0 {

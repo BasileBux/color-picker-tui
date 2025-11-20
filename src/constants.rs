@@ -14,8 +14,9 @@ pub const BACKGROUND_COLOR: CustomRgb = CustomRgb { r: 0x1d, g: 0x1d, b: 0x1d };
 pub const VALUE_DISPLAY_REL_POS: Vec2 = Vec2 { x: 0, y: 0 };
 
 pub const SV_PICKER_REL_POS: Vec2 = Vec2 { x: 0, y: 2 };
-pub const SV_PICKER_HEIGHT: u32 = 25;
-pub const SV_PICKER_WIDTH: u32 = 50;
+pub const SV_PICKER_HEIGHT: u32 = 30;
+pub const SV_PICKER_WIDTH: u32 = 60;
+
 
 pub const HUE_PICKER_REL_POS: Vec2 = Vec2 { x: SV_PICKER_WIDTH + 3, y: 2 };
 pub const HUE_PICKER_HEIGHT: u32 = SV_PICKER_HEIGHT;
