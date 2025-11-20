@@ -161,6 +161,11 @@ fn main() -> io::Result<()> {
                     if event.code == KeyCode::Char('q') {
                         break;
                     }
+                    if event.code == KeyCode::Char('c')
+                        && event.modifiers.contains(KeyModifiers::CONTROL)
+                    {
+                        break;
+                    }
                     match inputs.value_input(event.code) {
                         Some((focus, value)) => {
                             match focus {

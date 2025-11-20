@@ -7,6 +7,3 @@ project I once wrote in Zig. It looks the same but is now written in Rust so it'
 blazingly fast™. And the codebase is way cleaner. Also, this time I read about color
 representations so the saturation and value picker is actually correct.
 
-## TODO
-
-- [ ] Add clipboard copy/paste support
