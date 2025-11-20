@@ -1,4 +1,4 @@
-use palette::{Hsv, RgbHue, SetHue};
+use palette::{RgbHue, SetHue};
 use std::io::{self, Write, stdout};
 use tui_color_picker::types::*;
 
@@ -6,7 +6,7 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::*,
     execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Color, Print, SetBackgroundColor},
     terminal::*,
 };
 use std::time::Duration;
@@ -15,6 +15,7 @@ use tui_color_picker::utils::{hsv_from_rgb, rgb_from_hsv};
 mod hue_picker;
 mod inputs;
 mod sv_picker;
+mod value_display;
 
 fn setup() -> io::Result<()> {
     execute!(
@@ -41,39 +42,6 @@ impl Drop for Cleanup {
         let _ = stdout().flush();
         let _ = disable_raw_mode();
     }
-}
-
-fn draw_value_display(pos: &Vec2, color: &Hsv) -> io::Result<()> {
-    let (r, g, b) = rgb_from_hsv(color);
-    execute!(
-        stdout(),
-        MoveTo(pos.x as u16, pos.y as u16),
-        Clear(ClearType::CurrentLine),
-        SetForegroundColor(Color::Rgb { r, g, b }),
-        Print(format!("{}", FULL_CELL_BLOCK).repeat(8)),
-        ResetColor,
-        SetBackgroundColor(Color::Rgb {
-            r: BACKGROUND_COLOR.r,
-            g: BACKGROUND_COLOR.g,
-            b: BACKGROUND_COLOR.b,
-        }),
-        Print(format!(
-            "{}HEX: #{:02x}{:02x}{:02x}{}RGB: {:>3}, {:>3}, {:>3}{}HSL: {:>3.0}, {:>3.2}%, {:>3.2}%",
-            SPACE,
-            r,
-            g,
-            b,
-            SPACE,
-            r,
-            g,
-            b,
-            SPACE,
-            color.hue.into_positive_degrees(),
-            color.saturation * 100.0,
-            color.value * 100.0
-        ))
-    )?;
-    Ok(())
 }
 
 fn compute_offset(term_width: u16, term_height: u16) -> Vec2 {
@@ -104,7 +72,7 @@ fn draw_all(
 ) -> io::Result<()> {
     sv_picker.draw()?;
     hue_picker.draw()?;
-    draw_value_display(
+    value_display::draw_value_display(
         &(VALUE_DISPLAY_REL_POS + *offset),
         &sv_picker.selected_color,
     )?;
@@ -112,12 +80,17 @@ fn draw_all(
     Ok(())
 }
 
+fn check_terminal_size(width: u16, height: u16) -> bool {
+    width < (TOTAL_WIDTH + 2) as u16 || height < (TOTAL_HEIGHT + 2) as u16
+}
+
 fn main() -> io::Result<()> {
     setup()?;
     let _clean = Cleanup;
 
     let (term_width, term_height) = crossterm::terminal::size()?;
-    let offset = compute_offset(term_width, term_height);
+    let mut term_too_small = check_terminal_size(term_width, term_height);
+    let mut offset = compute_offset(term_width, term_height);
 
     let mut sv_picker = sv_picker::SVPicker::new(
         SV_PICKER_REL_POS + offset,
@@ -136,7 +109,7 @@ fn main() -> io::Result<()> {
     loop {
         if poll(Duration::from_millis(100))? {
             match read()? {
-                Event::Mouse(event) => {
+                Event::Mouse(event) if !term_too_small => {
                     if event.kind == MouseEventKind::Down(MouseButton::Left)
                         || event.kind == MouseEventKind::Drag(MouseButton::Left)
                     {
@@ -148,7 +121,7 @@ fn main() -> io::Result<()> {
                         }) && y >= 0
                             && x >= 0
                         {
-                            draw_value_display(
+                            value_display::draw_value_display(
                                 &(VALUE_DISPLAY_REL_POS + offset),
                                 &sv_picker.selected_color,
                             )?;
@@ -163,7 +136,7 @@ fn main() -> io::Result<()> {
                             && y >= 0
                         {
                             sv_picker.set_hue(hue);
-                            draw_value_display(
+                            value_display::draw_value_display(
                                 &(VALUE_DISPLAY_REL_POS + offset),
                                 &sv_picker.selected_color,
                             )?;
@@ -184,7 +157,7 @@ fn main() -> io::Result<()> {
                         }
                     }
                 }
-                Event::Key(event) => {
+                Event::Key(event) if !term_too_small => {
                     if event.code == KeyCode::Char('q') {
                         break;
                     }
@@ -229,7 +202,7 @@ fn main() -> io::Result<()> {
                             }
                             hue_picker.draw()?;
                             sv_picker.draw()?;
-                            draw_value_display(
+                            value_display::draw_value_display(
                                 &(VALUE_DISPLAY_REL_POS + offset),
                                 &sv_picker.selected_color,
                             )?;
@@ -239,16 +212,29 @@ fn main() -> io::Result<()> {
                     }
                 }
                 Event::Resize(x, y) => {
-                    if x < (TOTAL_WIDTH + 2) as u16 || y < (TOTAL_HEIGHT + 2) as u16 {
-                        // TODO: Show warning about terminal being too small, don't draw the UI and
-                        // set some flag to avoid managing inputs for invalid state
+                    if check_terminal_size(x, y) {
+                        term_too_small = true;
+                        let warning_text = "Terminal too small!";
+                        execute!(
+                            stdout(),
+                            SetBackgroundColor(Color::Rgb {
+                                r: BACKGROUND_COLOR.r,
+                                g: BACKGROUND_COLOR.g,
+                                b: BACKGROUND_COLOR.b
+                            }),
+                            Clear(ClearType::All),
+                            MoveTo((x / 2) - (warning_text.len() as u16 / 2), y / 2),
+                            Print(warning_text),
+                        )?;
                         continue;
                     }
+                    term_too_small = false;
+                    offset = compute_offset(x, y);
                     offset_all(
                         &mut sv_picker,
                         &mut hue_picker,
                         &mut inputs,
-                        &compute_offset(x, y),
+                        &offset,
                     );
                     execute!(
                         stdout(),
