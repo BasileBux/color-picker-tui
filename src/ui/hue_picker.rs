@@ -1,15 +1,14 @@
 use palette::{Hsv, RgbHue, SetHue};
 use std::io::{self, Write, stdout};
-use tui_color_picker::constants::*;
-use tui_color_picker::types::*;
+use crate::constants::*;
+use crate::utils::rgb_from_hsv;
+use crate::types::Vec2;
 
 use crossterm::{
     QueueableCommand,
     cursor::{MoveDown, MoveLeft, MoveTo},
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
 };
-
-use tui_color_picker::utils::rgb_from_hsv;
 
 pub struct HuePicker {
     pub buf: Vec<u8>,

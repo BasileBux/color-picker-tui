@@ -1,7 +1,8 @@
 use palette::{Hsv, RgbHue, SetHue};
 use std::io::{self, Write, stdout};
-use tui_color_picker::constants::*;
-use tui_color_picker::types::*;
+use crate::constants::*;
+use crate::utils::rgb_from_hsv;
+use crate::types::Vec2;
 
 use crossterm::{
     QueueableCommand,
@@ -9,7 +10,6 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
 };
 
-use tui_color_picker::utils::rgb_from_hsv;
 
 pub struct SVPicker {
     pub buf: Vec<u8>,
@@ -37,8 +37,7 @@ impl SVPicker {
     pub fn draw(&mut self) -> io::Result<()> {
         let mut pixel = Hsv::new(self.selected_color.hue.into_positive_degrees(), 0.0, 1.0);
         self.buf.clear();
-        self.buf
-            .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
+        self.buf.queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
         for _ in 0..self.height {
             for _ in 0..self.width {
                 let (r, g, b) = rgb_from_hsv(&pixel);

@@ -24,3 +24,20 @@ pub fn wl_paste() -> Result<String, io::Error> {
     String::from_utf8(out.stdout)
         .map_err(|_| io::Error::new(ErrorKind::InvalidData, "clipboard contained invalid UTF-8"))
 }
+
+pub fn clipboard_copy(str: &str) -> io::Result<()> {
+    if std::env::var("WAYLAND_DISPLAY").is_ok() {
+        wl_copy(str)?;
+    } else {
+        todo!("Add support for other clipboard systems");
+    }
+    Ok(())
+}
+
+pub fn clipboard_paste() -> io::Result<String> {
+    if std::env::var("WAYLAND_DISPLAY").is_ok() {
+        wl_paste()
+    } else {
+        todo!("Add support for other clipboard systems");
+    }
+}

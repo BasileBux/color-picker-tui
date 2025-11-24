@@ -6,6 +6,12 @@ pub struct Vec2 {
     pub y: u32,
 }
 
+impl Vec2 {
+    pub fn zero() -> Vec2 {
+        Vec2 { x: 0, y: 0 }
+    }
+}
+
 impl ops::Add for Vec2 {
     type Output = Vec2;
     fn add(self, rhs: Vec2) -> Vec2 {

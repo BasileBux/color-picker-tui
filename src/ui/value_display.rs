@@ -1,6 +1,8 @@
 use palette::Hsv;
 use std::io::{self, stdout};
-use tui_color_picker::types::*;
+use crate::constants::*;
+use crate::utils::rgb_from_hsv;
+use crate::types::Vec2;
 
 use crossterm::{
     cursor::MoveTo,
@@ -8,8 +10,6 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::*,
 };
-use tui_color_picker::constants::*;
-use tui_color_picker::utils::rgb_from_hsv;
 
 pub fn draw_value_display(pos: &Vec2, color: &Hsv) -> io::Result<()> {
     let (r, g, b) = rgb_from_hsv(color);

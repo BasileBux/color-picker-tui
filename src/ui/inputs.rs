@@ -1,7 +1,8 @@
 use palette::Hsv;
 use std::io::{self, Write, stdout};
-use tui_color_picker::types::*;
-use tui_color_picker::constants::*;
+use crate::constants::*;
+use crate::utils::rgb_from_hsv;
+use crate::types::Vec2;
 
 use crossterm::{
     QueueableCommand,
@@ -10,7 +11,6 @@ use crossterm::{
     execute,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
 };
-use tui_color_picker::utils::rgb_from_hsv;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Focus {
