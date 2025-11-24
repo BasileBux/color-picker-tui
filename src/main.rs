@@ -10,6 +10,7 @@ use crossterm::{
     terminal::*,
 };
 use std::time::Duration;
+use tui_color_picker::clipboard::*;
 use tui_color_picker::constants::*;
 use tui_color_picker::utils::{hsv_from_rgb, rgb_from_hsv};
 mod hue_picker;
@@ -158,14 +159,32 @@ fn main() -> io::Result<()> {
                     }
                 }
                 Event::Key(event) if !term_too_small => {
-                    if event.code == KeyCode::Char('q') {
-                        break;
-                    }
-                    if event.code == KeyCode::Char('c')
-                        && event.modifiers.contains(KeyModifiers::CONTROL)
+                    if event.code == KeyCode::Char('q')
+                        || event.code == KeyCode::Char('c')
+                        || event.code == KeyCode::Esc
                     {
                         break;
                     }
+                    if event.code == KeyCode::Char('y') {
+                        let (r, g, b) = rgb_from_hsv(&sv_picker.selected_color);
+                        // TODO: Use abstraction for wayland / X11, Windows, osx clipboard handling
+                        // TODO: Allow copying in different formats
+                        wl_copy(&format!("#{:02X}{:02X}{:02X}", r, g, b))?;
+                        continue;
+                    }
+                    if event.code == KeyCode::Char('p') {
+                        // TODO: Use abstraction for wayland / X11, Windows, osx clipboard handling
+                        // TODO: Allow pasting from different formats
+                        let clipboard_content = wl_paste()?;
+                        let clipboard_content = clipboard_content.trim().trim_start_matches('#');
+                        let value = u32::from_str_radix(&clipboard_content, 16).unwrap_or(0);
+                        let r = ((value >> 16) & 0xFF) as u8;
+                        let g = ((value >> 8) & 0xFF) as u8;
+                        let b = (value & 0xFF) as u8;
+                        sv_picker.selected_color = hsv_from_rgb(r, g, b);
+                        draw_all(&mut sv_picker, &mut hue_picker, &mut inputs, &offset)?;
+                    }
+
                     match inputs.value_input(event.code) {
                         Some((focus, value)) => {
                             match focus {
@@ -205,13 +224,14 @@ fn main() -> io::Result<()> {
                                 }
                                 _ => {}
                             }
-                            hue_picker.draw()?;
-                            sv_picker.draw()?;
-                            value_display::draw_value_display(
-                                &(VALUE_DISPLAY_REL_POS + offset),
-                                &sv_picker.selected_color,
-                            )?;
-                            inputs.draw(&sv_picker.selected_color)?;
+                            // hue_picker.draw()?;
+                            // sv_picker.draw()?;
+                            // value_display::draw_value_display(
+                            //     &(VALUE_DISPLAY_REL_POS + offset),
+                            //     &sv_picker.selected_color,
+                            // )?;
+                            // inputs.draw(&sv_picker.selected_color)?;
+                            draw_all(&mut sv_picker, &mut hue_picker, &mut inputs, &offset)?;
                         }
                         None => {
                             if inputs.focus == inputs::Focus::NONE {
