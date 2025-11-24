@@ -181,7 +181,7 @@ impl State {
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> io::Result<()> {
         if event.code == KeyCode::Char('q')
-            || event.code == KeyCode::Char('c')
+            || (event.code == KeyCode::Char('c') && event.modifiers.contains(KeyModifiers::CONTROL))
             || event.code == KeyCode::Esc
         {
             self.exit_signal = true;
