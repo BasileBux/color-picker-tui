@@ -10,6 +10,10 @@ impl Vec2 {
     pub fn zero() -> Vec2 {
         Vec2 { x: 0, y: 0 }
     }
+
+    pub fn from_signed_tuple(t: (u32, u32)) -> Vec2 {
+        Vec2 { x: t.0, y: t.1 }
+    }
 }
 
 impl ops::Add for Vec2 {

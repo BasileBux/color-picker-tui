@@ -1,15 +1,14 @@
+use crate::constants::*;
+use crate::types::Vec2;
+use crate::utils::rgb_from_hsv;
 use palette::{Hsv, RgbHue, SetHue};
 use std::io::{self, Write, stdout};
-use crate::constants::*;
-use crate::utils::rgb_from_hsv;
-use crate::types::Vec2;
 
 use crossterm::{
     QueueableCommand,
     cursor::{MoveDown, MoveLeft, MoveTo},
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
 };
-
 
 pub struct SVPicker {
     pub buf: Vec<u8>,
@@ -37,7 +36,8 @@ impl SVPicker {
     pub fn draw(&mut self) -> io::Result<()> {
         let mut pixel = Hsv::new(self.selected_color.hue.into_positive_degrees(), 0.0, 1.0);
         self.buf.clear();
-        self.buf.queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
+        self.buf
+            .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
         for _ in 0..self.height {
             for _ in 0..self.width {
                 let (r, g, b) = rgb_from_hsv(&pixel);
@@ -91,11 +91,11 @@ impl SVPicker {
             .set_hue(RgbHue::from_degrees(hue_degrees));
     }
 
-    pub fn set_selected_color(&mut self, pos: Vec2) -> Result<(), ()> {
-        if pos.x >= self.width || pos.y >= self.height {
+    pub fn change_color(&mut self, x: u32, y: u32) -> Result<(), ()> {
+        if x >= self.width || y >= self.height {
             return Err(());
         }
-        self.selected_color = self.get(pos.x, pos.y)?;
+        self.selected_color = self.get(x, y)?;
         Ok(())
     }
 }

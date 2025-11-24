@@ -1,8 +1,8 @@
+use crate::constants::*;
+use crate::types::Vec2;
+use crate::utils::rgb_from_hsv;
 use palette::Hsv;
 use std::io::{self, stdout};
-use crate::constants::*;
-use crate::utils::rgb_from_hsv;
-use crate::types::Vec2;
 
 use crossterm::{
     cursor::MoveTo,

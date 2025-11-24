@@ -1,8 +1,8 @@
+use crate::constants::*;
+use crate::types::Vec2;
+use crate::utils::rgb_from_hsv;
 use palette::Hsv;
 use std::io::{self, Write, stdout};
-use crate::constants::*;
-use crate::utils::rgb_from_hsv;
-use crate::types::Vec2;
 
 use crossterm::{
     QueueableCommand,
@@ -25,7 +25,7 @@ pub enum Focus {
 }
 
 impl Focus {
-    pub fn value(&self) -> u16 {
+    pub fn value(&self) -> u32 {
         match self {
             Focus::Hex => INPUTS_CB_HEIGHT,
             Focus::R => INPUTS_CB_HEIGHT + 2,
@@ -148,7 +148,7 @@ impl Inputs {
         Ok(())
     }
 
-    pub fn mouse_click(&mut self, x: u16, y: u16) -> Result<(), ()> {
+    pub fn mouse_click(&mut self, x: u32, y: u32) -> Result<(), ()> {
         if x >= 7 || y < INPUTS_CB_HEIGHT || y >= Focus::V.value() + 1 {
             // 7 is the length of "#RRGGBB"
             let _ = self.lose_focus();
@@ -224,7 +224,7 @@ impl Inputs {
             stdout(),
             MoveTo(
                 self.pos.x as u16 + self.focus.prefix().len() as u16,
-                self.pos.y as u16 + self.focus.value()
+                self.pos.y as u16 + self.focus.value() as u16
             ),
             Show,
             Print(format!("{}", " ".repeat(7))), //Equivalent of clearing
@@ -266,7 +266,7 @@ impl Inputs {
             stdout(),
             MoveTo(
                 self.pos.x as u16 + self.focus.prefix().len() as u16,
-                self.pos.y as u16 + self.focus.value()
+                self.pos.y as u16 + self.focus.value() as u16
             ),
             Show,
             Print(format!("{}", " ".repeat(7))), //Equivalent of clearing

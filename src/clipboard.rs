@@ -1,4 +1,7 @@
-use std::{io::{self, ErrorKind}, process::Command};
+use std::{
+    io::{self, ErrorKind},
+    process::Command,
+};
 
 // TODO: Add support for X11, windows, darwin clipboards.
 // TODO: Add visual feedback for copy/paste operations.
