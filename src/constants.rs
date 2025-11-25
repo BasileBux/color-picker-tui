@@ -50,13 +50,14 @@ pub const INPUTS_REL_POS: Vec2 = Vec2 {
 };
 pub const INPUTS_CB_HEIGHT: u32 = 4;
 pub const INPUTS_CB_WIDTH: u16 = 16;
+pub const INPUTS_HEIGHT: u32 = INPUTS_CB_HEIGHT + 9;
 
 pub const COPY_FORMAT_SELECTOR_SPACING: u16 = 6;
 pub const COPY_FORMAT_SELECTOR_WIDTH: u16 = COPY_FORMAT_SELECTOR_SPACING + 18;
 pub const COPY_FORMAT_SELECTOR_HEIGHT: u16 = 4;
 pub const COPY_FORMAT_SELECTOR_RES_POS: Vec2 = Vec2 {
     x: INPUTS_REL_POS.x,
-    y: SV_PICKER_REL_POS.y + SV_PICKER_HEIGHT - COPY_FORMAT_SELECTOR_HEIGHT as u32,
+    y: INPUTS_REL_POS.y + INPUTS_HEIGHT + 2,
 };
 
 const fn const_max(a: u16, b: u16) -> u16 {

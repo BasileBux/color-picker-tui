@@ -102,7 +102,7 @@ pub fn clear_clipboard_format_selector(pos: Vec2) -> io::Result<()> {
     )
 }
 
-pub fn draw_clipboard_format_selector(pos: Vec2, color: Hsv, fade: bool) -> io::Result<()> {
+pub fn draw_clipboard_format_selector(pos: Vec2, mut color: Hsv, fade: bool) -> io::Result<()> {
     const TITLE: &str = "Select Copy Format:";
 
     let (r, g, b) = rgb_from_hsv(&color);
@@ -115,6 +115,11 @@ pub fn draw_clipboard_format_selector(pos: Vec2, color: Hsv, fade: bool) -> io::
         (color.value * 100.0) as u8
     );
 
+    // Change color for display purposes
+    color.saturation = 0.5;
+    color.value = 0.95;
+    let (r, g, b) = rgb_from_hsv(&color);
+
     execute!(
         stdout(),
         ResetDefaultColors(fade),
@@ -123,19 +128,19 @@ pub fn draw_clipboard_format_selector(pos: Vec2, color: Hsv, fade: bool) -> io::
         MoveLeft(TITLE.len() as u16),
         MoveDown(1),
         Print("He"),
-        PrintBoldColored("x", 255, 255, 0),
+        PrintBoldColored("x", r, g, b),
         Print(":"),
         MoveRight(COPY_FORMAT_SELECTOR_SPACING - 4),
         Print(&hex_str),
         MoveLeft(COPY_FORMAT_SELECTOR_SPACING + hex_str.len() as u16),
         MoveDown(1),
-        PrintBoldColored("R", 255, 0, 255),
+        PrintBoldColored("R", r, g, b),
         Print("GB:"),
         MoveRight(COPY_FORMAT_SELECTOR_SPACING - 4),
         Print(&rgb_str),
         MoveLeft(COPY_FORMAT_SELECTOR_SPACING + rgb_str.len() as u16),
         MoveDown(1),
-        PrintBoldColored("H", 0, 255, 255),
+        PrintBoldColored("H", r, g, b),
         Print("SV:"),
         MoveRight(COPY_FORMAT_SELECTOR_SPACING - 4),
         Print(&hsv_str),
