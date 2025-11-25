@@ -171,6 +171,7 @@ impl State {
 
             if let Some(pos) = normalize_pos(event, &self.inputs.pos)
                 && let Ok(()) = self.inputs.mouse_click(pos.x, pos.y)
+                && event.kind != MouseEventKind::Drag(MouseButton::Left)
             {
                 self.inputs.gain_focus(&self.sv_picker.selected_color)?;
             } else {
