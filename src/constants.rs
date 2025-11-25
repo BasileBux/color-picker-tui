@@ -17,6 +17,20 @@ pub const BACKGROUND_COLOR: CustomRgb = CustomRgb {
     b: 0x1d,
 };
 
+pub const TEXT_COLOR: CustomRgb = CustomRgb {
+    r: 0xff,
+    g: 0xff,
+    b: 0xff,
+};
+
+pub const FADE_VALUE_FACTOR: f32 = 0.4;
+
+pub const FADED_TEXT_COLOR: CustomRgb = CustomRgb {
+    r: 0x80,
+    g: 0x80,
+    b: 0x80,
+};
+
 pub const VALUE_DISPLAY_REL_POS: Vec2 = Vec2 { x: 0, y: 0 };
 
 pub const SV_PICKER_REL_POS: Vec2 = Vec2 { x: 0, y: 2 };

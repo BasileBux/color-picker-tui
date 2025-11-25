@@ -75,14 +75,15 @@ impl State {
         })
     }
 
-    pub fn draw(&mut self) -> io::Result<()> {
-        self.sv_picker.draw()?;
-        self.hue_picker.draw()?;
+    pub fn draw(&mut self, fade: bool) -> io::Result<()> {
+        self.sv_picker.draw(fade)?;
+        self.hue_picker.draw(fade)?;
         value_display::draw_value_display(
             &(VALUE_DISPLAY_REL_POS + self.offset),
             &self.sv_picker.selected_color,
+            fade,
         )?;
-        self.inputs.draw(&self.sv_picker.selected_color)?;
+        self.inputs.draw(&self.sv_picker.selected_color, fade)?;
         Ok(())
     }
 
@@ -101,14 +102,15 @@ impl State {
         self.hue_picker.pos = HUE_PICKER_REL_POS + self.offset;
     }
 
-    pub fn draw_component(&mut self, component: Component) -> io::Result<()> {
+    pub fn draw_component(&mut self, component: Component, fade: bool) -> io::Result<()> {
         match component {
-            Component::SVPicker => self.sv_picker.draw(),
-            Component::HuePicker => self.hue_picker.draw(),
-            Component::Inputs => self.inputs.draw(&self.sv_picker.selected_color),
+            Component::SVPicker => self.sv_picker.draw(fade),
+            Component::HuePicker => self.hue_picker.draw(fade),
+            Component::Inputs => self.inputs.draw(&self.sv_picker.selected_color, fade),
             Component::ValueDisplay => value_display::draw_value_display(
                 &(VALUE_DISPLAY_REL_POS + self.offset),
                 &self.sv_picker.selected_color,
+                fade,
             ),
         }
     }
@@ -142,7 +144,7 @@ impl State {
             }),
             Clear(ClearType::All)
         )?;
-        self.draw()?;
+        self.draw(false)?;
         stdout().flush()?;
         Ok(())
     }
@@ -154,17 +156,17 @@ impl State {
             if let Some(pos) = normalize_pos(event, &self.sv_picker.pos)
                 && let Ok(()) = self.sv_picker.change_color(pos.x, pos.y)
             {
-                self.draw_component(Component::ValueDisplay)?;
-                self.draw_component(Component::Inputs)?;
+                self.draw_component(Component::ValueDisplay, false)?;
+                self.draw_component(Component::Inputs, false)?;
             }
 
             if let Some(pos) = normalize_pos(event, &self.hue_picker.pos)
                 && let Ok(hue) = self.hue_picker.get(pos.x, pos.y)
             {
                 self.sv_picker.set_hue(hue);
-                self.draw_component(Component::ValueDisplay)?;
-                self.draw_component(Component::Inputs)?;
-                self.draw_component(Component::SVPicker)?;
+                self.draw_component(Component::ValueDisplay, false)?;
+                self.draw_component(Component::Inputs, false)?;
+                self.draw_component(Component::SVPicker, false)?;
             }
 
             if let Some(pos) = normalize_pos(event, &self.inputs.pos)
@@ -173,7 +175,7 @@ impl State {
                 self.inputs.gain_focus(&self.sv_picker.selected_color)?;
             } else {
                 let _ = self.inputs.lose_focus();
-                self.draw_component(Component::Inputs)?;
+                self.draw_component(Component::Inputs, false)?;
             }
         }
         Ok(())
@@ -202,7 +204,7 @@ impl State {
             let g = ((value >> 8) & 0xFF) as u8;
             let b = (value & 0xFF) as u8;
             self.sv_picker.selected_color = hsv_from_rgb(r, g, b);
-            self.draw()?;
+            self.draw(false)?;
         }
 
         match self.inputs.value_input(event.code) {
@@ -242,12 +244,12 @@ impl State {
                     }
                     _ => {}
                 }
-                self.draw()?;
+                self.draw(false)?;
             }
             None => {
                 if self.inputs.focus == inputs::Focus::NONE {
                     let _ = self.inputs.lose_focus();
-                    self.draw_component(Component::Inputs)?;
+                    self.draw_component(Component::Inputs, false)?;
                 }
             }
         }

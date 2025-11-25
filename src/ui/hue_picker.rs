@@ -1,13 +1,13 @@
-use crate::constants::*;
+use crate::crossterm_commands::ResetDefaultColors;
 use crate::types::Vec2;
-use crate::utils::rgb_from_hsv;
+use crate::{constants::*, crossterm_commands::SetCellPixelsColor};
 use palette::{Hsv, RgbHue, SetHue};
 use std::io::{self, Write, stdout};
 
 use crossterm::{
     QueueableCommand,
     cursor::{MoveDown, MoveLeft, MoveTo},
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Print},
 };
 
 pub struct HuePicker {
@@ -29,7 +29,7 @@ impl HuePicker {
         }
     }
 
-    pub fn draw(&mut self) -> io::Result<()> {
+    pub fn draw(&mut self, fade: bool) -> io::Result<()> {
         self.buf.clear();
 
         let mut pixel = Hsv::new(0.0, 1.0, 1.0);
@@ -37,20 +37,12 @@ impl HuePicker {
             .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
 
         for _ in 0..self.height {
-            let (r, g, b) = rgb_from_hsv(&pixel);
-            self.buf
-                .queue(SetBackgroundColor(Color::Rgb { r: r, g: g, b: b }))?;
             let lower = Hsv::new(
                 (pixel.hue.into_positive_degrees() + self.hue_step) % 360.0,
                 1.0,
                 1.0,
             );
-            let (lower_r, lower_g, lower_b) = rgb_from_hsv(&lower);
-            self.buf.queue(SetForegroundColor(Color::Rgb {
-                r: lower_r,
-                g: lower_g,
-                b: lower_b,
-            }))?;
+            self.buf.queue(SetCellPixelsColor(&pixel, &lower, fade))?;
             self.buf.queue(Print(
                 format!("{}", LOWER_HALF_BLOCK).repeat(self.width as usize),
             ))?;
@@ -60,12 +52,7 @@ impl HuePicker {
             self.buf.queue(MoveLeft(self.width as u16))?;
             self.buf.queue(MoveDown(1))?;
         }
-        self.buf.queue(ResetColor)?;
-        self.buf.queue(SetBackgroundColor(Color::Rgb {
-            r: BACKGROUND_COLOR.r,
-            g: BACKGROUND_COLOR.g,
-            b: BACKGROUND_COLOR.b,
-        }))?;
+        self.buf.queue(ResetDefaultColors(fade))?;
         stdout().write_all(&self.buf)?;
         stdout().flush()?;
         Ok(())

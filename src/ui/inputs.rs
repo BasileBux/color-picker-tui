@@ -1,6 +1,7 @@
-use crate::constants::*;
+use crate::crossterm_commands::ResetDefaultColors;
 use crate::types::Vec2;
 use crate::utils::rgb_from_hsv;
+use crate::{constants::*, crossterm_commands::SetForegroundColorWithFade};
 use palette::Hsv;
 use std::io::{self, Write, stdout};
 
@@ -9,7 +10,7 @@ use crossterm::{
     cursor::{Hide, MoveDown, MoveLeft, MoveTo, Show},
     event::KeyCode,
     execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Print},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,13 +85,12 @@ impl Inputs {
         }
     }
 
-    pub fn draw(&mut self, color: &Hsv) -> io::Result<()> {
+    pub fn draw(&mut self, color: &Hsv, fade: bool) -> io::Result<()> {
         self.buf.clear();
         let (r, g, b) = rgb_from_hsv(&color);
         self.buf
             .queue(MoveTo(self.pos.x as u16, self.pos.y as u16))?;
-        self.buf
-            .queue(SetForegroundColor(Color::Rgb { r: r, g: g, b: b }))?;
+        self.buf.queue(SetForegroundColorWithFade(color, fade))?;
 
         // Draw color block
         for _ in 0..INPUTS_CB_HEIGHT {
@@ -101,12 +101,7 @@ impl Inputs {
             self.buf.queue(MoveLeft(INPUTS_CB_WIDTH))?;
         }
 
-        self.buf.queue(ResetColor)?;
-        self.buf.queue(SetBackgroundColor(Color::Rgb {
-            r: BACKGROUND_COLOR.r,
-            g: BACKGROUND_COLOR.g,
-            b: BACKGROUND_COLOR.b,
-        }))?;
+        self.buf.queue(ResetDefaultColors(fade))?;
 
         // Draw values
         self.buf

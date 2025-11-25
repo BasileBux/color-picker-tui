@@ -7,24 +7,20 @@ use std::io::{self, stdout};
 use crossterm::{
     cursor::MoveTo,
     execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Print},
     terminal::*,
 };
+use crate::crossterm_commands::*;
 
-pub fn draw_value_display(pos: &Vec2, color: &Hsv) -> io::Result<()> {
+pub fn draw_value_display(pos: &Vec2, color: &Hsv, fade: bool) -> io::Result<()> {
     let (r, g, b) = rgb_from_hsv(color);
     execute!(
         stdout(),
         MoveTo(pos.x as u16, pos.y as u16),
         Clear(ClearType::CurrentLine),
-        SetForegroundColor(Color::Rgb { r, g, b }),
+        SetForegroundColorWithFade(color, fade),
         Print(format!("{}", FULL_CELL_BLOCK).repeat(8)),
-        ResetColor,
-        SetBackgroundColor(Color::Rgb {
-            r: BACKGROUND_COLOR.r,
-            g: BACKGROUND_COLOR.g,
-            b: BACKGROUND_COLOR.b,
-        }),
+        ResetDefaultColors(fade),
         Print(format!(
             "{}HEX: #{:02x}{:02x}{:02x}{}RGB: {:>3}, {:>3}, {:>3}{}HSL: {:>3.0}, {:>3.2}%, {:>3.2}%",
             SPACE,

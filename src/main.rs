@@ -18,7 +18,7 @@ fn main() -> io::Result<()> {
     )?;
     app.update_offset(term_width, term_height);
     app.offset_all();
-    app.draw()?;
+    app.draw(false)?;
 
     loop {
         if poll(Duration::from_millis(100))? {
