@@ -7,7 +7,7 @@ use std::io::{self, Write, stdout};
 use crossterm::{
     QueueableCommand,
     cursor::{MoveDown, MoveLeft, MoveTo},
-    style::{Print},
+    style::Print,
 };
 
 pub struct HuePicker {

@@ -3,6 +3,8 @@ use crate::utils::{fade_color, rgb_from_hsv};
 use crossterm::Command;
 use palette::Hsv;
 
+// All functions under this comment support fading colors for a "disabled" effect
+
 pub struct SetForegroundColorWithFade<'a>(pub &'a Hsv, pub bool);
 impl<'a> Command for SetForegroundColorWithFade<'a> {
     fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {

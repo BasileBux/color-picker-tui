@@ -4,13 +4,8 @@ use crate::utils::rgb_from_hsv;
 use palette::Hsv;
 use std::io::{self, stdout};
 
-use crossterm::{
-    cursor::MoveTo,
-    execute,
-    style::{Print},
-    terminal::*,
-};
 use crate::crossterm_commands::*;
+use crossterm::{cursor::MoveTo, execute, style::Print, terminal::*};
 
 pub fn draw_value_display(pos: &Vec2, color: &Hsv, fade: bool) -> io::Result<()> {
     let (r, g, b) = rgb_from_hsv(color);

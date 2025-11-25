@@ -10,7 +10,7 @@ use crossterm::{
     cursor::{Hide, MoveDown, MoveLeft, MoveTo, Show},
     event::KeyCode,
     execute,
-    style::{Print},
+    style::Print,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
