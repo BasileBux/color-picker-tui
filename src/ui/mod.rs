@@ -1,4 +1,3 @@
-pub mod help;
 pub mod hue_picker;
 pub mod inputs;
 pub mod sv_picker;

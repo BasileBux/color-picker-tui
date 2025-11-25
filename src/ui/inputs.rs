@@ -1,4 +1,4 @@
-use crate::crossterm_commands::ResetDefaultColors;
+use crate::crossterm_commands::{PrintBold, ResetDefaultColors};
 use crate::types::Vec2;
 use crate::utils::rgb_from_hsv;
 use crate::{constants::*, crossterm_commands::SetForegroundColorWithFade};
@@ -109,32 +109,47 @@ impl Inputs {
         self.buf.queue(MoveLeft(7))?;
         self.buf.queue(MoveDown(2))?;
 
-        self.buf.queue(Print(format!("R {:>3}", r)))?;
+        self.buf.queue(PrintBold("R "))?;
+        self.buf.queue(Print(format!("{:>3}", r)))?;
+        // self.buf.queue(Print(format!("R {:>3}", r)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
-        self.buf.queue(Print(format!("G {:>3}", g)))?;
+        self.buf.queue(PrintBold("G "))?;
+        self.buf.queue(Print(format!("{:>3}", g)))?;
+        // self.buf.queue(Print(format!("G {:>3}", g)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
-        self.buf.queue(Print(format!("B {:>3}", b)))?;
+        self.buf.queue(PrintBold("B "))?;
+        self.buf.queue(Print(format!("{:>3}", b)))?;
+        // self.buf.queue(Print(format!("B {:>3}", b)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(2))?;
 
-        self.buf.queue(Print(format!(
-            "H {:>3.0}",
-            color.hue.into_positive_degrees()
-        )))?;
+        self.buf.queue(PrintBold("H "))?;
+        self.buf
+            .queue(Print(format!("{:>3.0}", color.hue.into_positive_degrees())))?;
+        // self.buf.queue(Print(format!(
+        //     "H {:>3.0}",
+        //     color.hue.into_positive_degrees()
+        // )))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
+        self.buf.queue(PrintBold("S "))?;
         self.buf
-            .queue(Print(format!("S {:>3.0}", color.saturation * 100.0)))?;
+            .queue(Print(format!("{:>3.0}", color.saturation * 100.0)))?;
+        // self.buf
+        //     .queue(Print(format!("S {:>3.0}", color.saturation * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
+        self.buf.queue(PrintBold("V "))?;
         self.buf
-            .queue(Print(format!("V {:>3.0}", color.value * 100.0)))?;
+            .queue(Print(format!("{:>3.0}", color.value * 100.0)))?;
+        // self.buf
+        //     .queue(Print(format!("V {:>3.0}", color.value * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 

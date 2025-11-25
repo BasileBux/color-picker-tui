@@ -16,21 +16,20 @@ pub fn draw_value_display(pos: &Vec2, color: &Hsv, fade: bool) -> io::Result<()>
         SetForegroundColorWithFade(color, fade),
         Print(format!("{}", FULL_CELL_BLOCK).repeat(8)),
         ResetDefaultColors(fade),
+        Print(SPACE),
+        PrintBold("HEX: "),
+        Print(format!("#{:02X}{:02X}{:02X}", r, g, b)),
+        Print(SPACE),
+        PrintBold("RGB: "),
+        Print(format!("{:>3}, {:>3}, {:>3}", r, g, b)),
+        Print(SPACE),
+        PrintBold("HSV: "),
         Print(format!(
-            "{}HEX: #{:02x}{:02x}{:02x}{}RGB: {:>3}, {:>3}, {:>3}{}HSL: {:>3.0}, {:>3.2}%, {:>3.2}%",
-            SPACE,
-            r,
-            g,
-            b,
-            SPACE,
-            r,
-            g,
-            b,
-            SPACE,
+            "{:>3.0}, {:>3.2}%, {:>3.2}%",
             color.hue.into_positive_degrees(),
             color.saturation * 100.0,
             color.value * 100.0
-        ))
+        )),
     )?;
     Ok(())
 }

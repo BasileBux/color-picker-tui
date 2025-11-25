@@ -22,13 +22,14 @@ fn main() -> io::Result<()> {
 
     loop {
         if poll(Duration::from_millis(100))? {
-            match read()? {
+            let event = read()?;
+            match event {
                 Event::Mouse(event) if !app.term_too_small => {
                     app.handle_mouse_event(event)?;
                 }
                 Event::Key(event) if !app.term_too_small => {
                     app.handle_key_event(event)?;
-                    if app.exit_signal {
+                    if app.flags & EXIT_FLAG != 0 {
                         break;
                     }
                 }

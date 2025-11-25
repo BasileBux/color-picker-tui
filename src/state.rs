@@ -4,6 +4,7 @@ use std::io::{self, Write, stdout};
 
 use crate::clipboard::*;
 use crate::constants::*;
+use crate::crossterm_commands::*;
 use crate::ui::*;
 use crossterm::cursor::MoveTo;
 use crossterm::style::Print;
@@ -23,7 +24,7 @@ pub struct State {
     pub inputs: inputs::Inputs,
     pub offset: Vec2,
     pub term_too_small: bool,
-    pub exit_signal: bool,
+    pub flags: u8,
 }
 
 pub enum Component {
@@ -32,6 +33,9 @@ pub enum Component {
     Inputs,
     ValueDisplay,
 }
+
+pub const EXIT_FLAG: u8 = 1 << 0;
+pub const COPY_FLAG: u8 = 1 << 1;
 
 impl Drop for State {
     /// Cleans up the terminal state when the application exits.
@@ -70,7 +74,7 @@ impl State {
             hue_picker,
             inputs,
             term_too_small: check_terminal_size(terminal_width, terminal_height),
-            exit_signal: false,
+            flags: 0,
             offset: Vec2::zero(),
         })
     }
@@ -121,11 +125,7 @@ impl State {
             let warning_text = "Terminal too small!";
             execute!(
                 stdout(),
-                SetBackgroundColor(Color::Rgb {
-                    r: BACKGROUND_COLOR.r,
-                    g: BACKGROUND_COLOR.g,
-                    b: BACKGROUND_COLOR.b
-                }),
+                ResetDefaultColors(false),
                 Clear(ClearType::All),
                 MoveTo((x / 2) - (warning_text.len() as u16 / 2), y / 2),
                 Print(warning_text),
@@ -135,15 +135,7 @@ impl State {
         self.term_too_small = false;
         self.update_offset(x, y);
         self.offset_all();
-        execute!(
-            stdout(),
-            SetBackgroundColor(Color::Rgb {
-                r: BACKGROUND_COLOR.r,
-                g: BACKGROUND_COLOR.g,
-                b: BACKGROUND_COLOR.b
-            }),
-            Clear(ClearType::All)
-        )?;
+        execute!(stdout(), ResetDefaultColors(false), Clear(ClearType::All))?;
         self.draw(false)?;
         stdout().flush()?;
         Ok(())
@@ -183,17 +175,27 @@ impl State {
     }
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> io::Result<()> {
+        if self.flags & COPY_FLAG != 0 {
+            handle_copy_input_format_selection_input(event, self.sv_picker.selected_color)?;
+            self.flags &= !COPY_FLAG;
+            clear_clipboard_format_selector(COPY_FORMAT_SELECTOR_RES_POS + self.offset)?;
+            return Ok(());
+        }
+
         if event.code == KeyCode::Char('q')
             || (event.code == KeyCode::Char('c') && event.modifiers.contains(KeyModifiers::CONTROL))
             || event.code == KeyCode::Esc
         {
-            self.exit_signal = true;
+            self.flags |= EXIT_FLAG;
             return Ok(());
         }
         if event.code == KeyCode::Char('y') {
-            let (r, g, b) = rgb_from_hsv(&self.sv_picker.selected_color);
-            // TODO: Allow copying in different formats
-            clipboard_copy(&format!("#{:02X}{:02X}{:02X}", r, g, b))?;
+            draw_clipboard_format_selector(
+                COPY_FORMAT_SELECTOR_RES_POS + self.offset,
+                self.sv_picker.selected_color,
+                false,
+            )?;
+            self.flags |= COPY_FLAG;
             return Ok(());
         }
         if event.code == KeyCode::Char('p') {

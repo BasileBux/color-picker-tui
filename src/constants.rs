@@ -51,5 +51,30 @@ pub const INPUTS_REL_POS: Vec2 = Vec2 {
 pub const INPUTS_CB_HEIGHT: u32 = 4;
 pub const INPUTS_CB_WIDTH: u16 = 16;
 
-pub const TOTAL_WIDTH: u32 = INPUTS_REL_POS.x + INPUTS_CB_WIDTH as u32;
+pub const COPY_FORMAT_SELECTOR_SPACING: u16 = 6;
+pub const COPY_FORMAT_SELECTOR_WIDTH: u16 = COPY_FORMAT_SELECTOR_SPACING + 18;
+pub const COPY_FORMAT_SELECTOR_HEIGHT: u16 = 4;
+pub const COPY_FORMAT_SELECTOR_RES_POS: Vec2 = Vec2 {
+    x: INPUTS_REL_POS.x,
+    y: SV_PICKER_REL_POS.y + SV_PICKER_HEIGHT - COPY_FORMAT_SELECTOR_HEIGHT as u32,
+};
+
+const fn const_max(a: u16, b: u16) -> u16 {
+    if a > b { a } else { b }
+}
+
+pub const TOTAL_WIDTH: u32 =
+    INPUTS_REL_POS.x + const_max(COPY_FORMAT_SELECTOR_WIDTH, INPUTS_CB_WIDTH) as u32;
 pub const TOTAL_HEIGHT: u32 = SV_PICKER_REL_POS.y + SV_PICKER_HEIGHT;
+
+// Box drawing characters
+pub const TOP_LEFT_ROUNDED: char = '\u{256d}';
+pub const TOP_RIGHT_ROUNDED: char = '\u{256e}';
+pub const BOTTOM_LEFT_ROUNDED: char = '\u{2570}';
+pub const BOTTOM_RIGHT_ROUNDED: char = '\u{256f}';
+pub const TOP_LEFT_SHARP: char = '\u{250c}';
+pub const TOP_RIGHT_SHARP: char = '\u{2510}';
+pub const BOTTOM_LEFT_SHARP: char = '\u{2514}';
+pub const BOTTOM_RIGHT_SHARP: char = '\u{2518}';
+pub const HORIZONTAL_LINE: char = '\u{2500}';
+pub const VERTICAL_LINE: char = '\u{2502}';
