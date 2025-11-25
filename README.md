@@ -4,6 +4,17 @@ This is a terminal based color picker. It is a little tool to help you choose
 pick colors and translate them from / to different formats (HEX, RGB, HSV). It
 is highly inspired by [this website](https://htmlcolorcodes.com/).
 
+<https://github.com/user-attachments/assets/8fed3262-f9c1-4451-bd7c-3993a934c965>
+
+## Features
+
+With `y`, you can copy the color and you will be prompted to choose the format by
+pressing the relevant key: `x` for HEX, `r` for RGB and `h` for HSV (you can see
+that at the end of the demo video).
+
+With `p`, you can paste a color from your clipboard into the input fields. The
+color format will be automatically detected.
+
 ## Installation
 
 I don't do packaging or releases. If you want to use it, you will need to build

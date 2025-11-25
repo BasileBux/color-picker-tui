@@ -42,7 +42,7 @@ pub const HUE_PICKER_REL_POS: Vec2 = Vec2 {
     y: 2,
 };
 pub const HUE_PICKER_HEIGHT: u32 = SV_PICKER_HEIGHT;
-pub const HUE_PICKER_WIDTH: u32 = 5;
+pub const HUE_PICKER_WIDTH: u32 = 6;
 
 pub const INPUTS_REL_POS: Vec2 = Vec2 {
     x: HUE_PICKER_REL_POS.x + HUE_PICKER_WIDTH + 3,
