@@ -31,7 +31,7 @@ color format will be automatically detected.
 ## Installation
 
 I don't do packaging or releases. If you want to use it, you will need to build
-it from source. Just [install install rust stuff](https://rust-lang.org/tools/install/)
+it from source. Just [install rust stuff](https://rust-lang.org/tools/install/)
 and run `cargo build --release` and you will get your binary.
 
 The TUI draws a big square for color selection. This square could not appear
