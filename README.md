@@ -6,7 +6,16 @@ is highly inspired by [this website](https://htmlcolorcodes.com/).
 
 <https://github.com/user-attachments/assets/8fed3262-f9c1-4451-bd7c-3993a934c965>
 
-## Features
+## Usage
+
+Just drag your mouse over the gradients to select a color. You can also give the
+colors in the input fields on the right. To validate the input, just press `enter`.
+You can also paste in the input fields with `Ctrl + Shift + V` or `p`. To copy the
+color, click on the relevant format at the top. 
+
+To quit the program, you can do `Ctrl + C`, `escape` or `q`. 
+
+### Keybindings
 
 With `y`, you can copy the color and you will be prompted to choose the format by
 pressing the relevant key: `x` for HEX, `r` for RGB and `h` for HSV (you can see
@@ -14,6 +23,10 @@ that at the end of the demo video).
 
 With `p`, you can paste a color from your clipboard into the input fields. The
 color format will be automatically detected.
+
+> [!WARNING]
+> Clipboard features are a work in progress. For now, only wayland is supported
+> through `wl-clipboard`. Also, only HEX format is supported for pasting.
 
 ## Installation
 
@@ -25,19 +38,6 @@ The TUI draws a big square for color selection. This square could not appear
 completely square depending on your font. For better looking squares, I
 recommend using a font which has a 1:2 ratio such as
 [FiraCode](https://github.com/tonsky/FiraCode).
-
-## Usage
-
-Just drag your mouse over the gradients to select a color. You can also give the
-colors in the input fields on the right. To validate the input, just press `enter`.
-You can also paste in the input fields with `Ctrl + Shift + V` or `p`. To copy the
-color, click on the relevant format at the top. 
-
-To quit the program, you can do `Ctrl + C`, `escape` or `q`. 
-
-> [!WARNING]
-> Clipboard support is only available on wayland with `wl-clipboard` installed.
-> Better implementation coming soon.
 
 ## Note
 
