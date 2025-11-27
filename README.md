@@ -24,10 +24,6 @@ that at the end of the demo video).
 With `p`, you can paste a color from your clipboard into the input fields. The
 color format will be automatically detected.
 
-> [!WARNING]
-> Clipboard features are a work in progress. For now, only wayland is supported
-> through `wl-clipboard`. Also, only HEX format is supported for pasting.
-
 ## Installation
 
 I don't do packaging or releases. If you want to use it, you will need to build
