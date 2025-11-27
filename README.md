@@ -24,6 +24,19 @@ that at the end of the demo video).
 With `p`, you can paste a color from your clipboard into the input fields. The
 color format will be automatically detected.
 
+<details>
+<summary>Supported regex</summary>
+
+```
+rgb: ^(?:[rR][gG][bB])?\(? *(\d{1,3}) *, *(\d{1,3}) *, *(\d{1,3}) *\)?$
+
+hsv: ^(?:[hH][sS][vV])?\(? *\s*(\d{1,3}(?:\.\d+)?)\s*,\s*(\d{1,3}(?:\.\d+)?)%?\s*,\s*(\d{1,3}(?:\.\d+)?)%?\s*\)?$
+
+hex: ^(?:0?[xX]|#)?([0-9a-fA-F]{6})$
+```
+
+</details>
+
 ## Installation
 
 I don't do packaging or releases. If you want to use it, you will need to build
