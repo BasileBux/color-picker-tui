@@ -1,8 +1,8 @@
+use crate::clipboard::{paste::*, ui::*};
 use crate::types::*;
 use crate::utils::*;
 use std::io::{self, Write, stdout};
 
-use crate::clipboard::*;
 use crate::constants::*;
 use crate::crossterm_commands::*;
 use crate::ui::*;
@@ -199,15 +199,10 @@ impl State {
             return Ok(());
         }
         if event.code == KeyCode::Char('p') {
-            // TODO: Allow pasting from different formats
-            let clipboard_content = clipboard_paste()?;
-            let clipboard_content = clipboard_content.trim().trim_start_matches('#');
-            let value = u32::from_str_radix(&clipboard_content, 16).unwrap_or(0);
-            let r = ((value >> 16) & 0xFF) as u8;
-            let g = ((value >> 8) & 0xFF) as u8;
-            let b = (value & 0xFF) as u8;
-            self.sv_picker.selected_color = hsv_from_rgb(r, g, b);
-            self.draw(false)?;
+            if let Some(clipboard_content) = clipboard_paste() {
+                self.sv_picker.selected_color = clipboard_content;
+                self.draw(false)?;
+            }
         }
 
         match self.inputs.value_input(event.code) {

@@ -1,7 +1,5 @@
-use std::{
-    io::{self, ErrorKind, stdout},
-    process::Command,
-};
+use crate::clipboard::copy::clipboard_copy;
+use std::io::{self, stdout};
 
 use crossterm::{
     cursor::{MoveDown, MoveLeft, MoveRight, MoveTo},
@@ -17,48 +15,6 @@ use crate::{
     types::Vec2,
     utils::rgb_from_hsv,
 };
-
-// TODO: Add support for X11, windows, darwin clipboards.
-// TODO: Add visual feedback for copy/paste operations.
-
-/// Warning no input validation is done on args inside of this
-/// function - be careful when using user input.
-pub fn wl_copy(arg: &str) -> io::Result<std::process::Child> {
-    std::process::Command::new("wl-copy").arg(arg).spawn()
-}
-
-/// Warning no output validation is done on the result of this
-/// function - be careful when using the result.
-pub fn wl_paste() -> Result<String, io::Error> {
-    let out = Command::new("wl-paste").output()?;
-
-    if !out.status.success() {
-        return Err(io::Error::new(
-            ErrorKind::Other,
-            format!("wl-paste exited with {}", out.status),
-        ));
-    }
-
-    String::from_utf8(out.stdout)
-        .map_err(|_| io::Error::new(ErrorKind::InvalidData, "clipboard contained invalid UTF-8"))
-}
-
-pub fn clipboard_copy(str: &str) -> io::Result<()> {
-    if std::env::var("WAYLAND_DISPLAY").is_ok() {
-        wl_copy(str)?;
-    } else {
-        todo!("Add support for other clipboard systems");
-    }
-    Ok(())
-}
-
-pub fn clipboard_paste() -> io::Result<String> {
-    if std::env::var("WAYLAND_DISPLAY").is_ok() {
-        wl_paste()
-    } else {
-        todo!("Add support for other clipboard systems");
-    }
-}
 
 pub enum ColorFormat {
     Hex,
