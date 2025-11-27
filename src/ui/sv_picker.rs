@@ -27,8 +27,16 @@ impl SVPicker {
             width,
             height,
             pos,
-            saturation_step: 1.0 / width as f64,
-            value_step: 1.0 / (height * 2) as f64,
+            saturation_step: if width == 1 {
+                0.0
+            } else {
+                1.0 / (width - 1) as f64
+            },
+            value_step: if height == 1 {
+                0.0
+            } else {
+                1.0 / (height - 1) as f64
+            },
             selected_color: Hsv::new(RgbHue::from_degrees(0.0), 1.0, 1.0),
             buf: Vec::with_capacity(height as usize * width as usize * 8),
         }
@@ -42,7 +50,7 @@ impl SVPicker {
         for _ in 0..self.height {
             for _ in 0..self.width {
                 let mut lower = pixel.clone();
-                lower.value = (lower.value - self.value_step as f32).max(0.0);
+                lower.value = lower.value - (self.value_step as f32 / 2.0).max(0.0);
                 self.buf.queue(SetCellPixelsColor(&pixel, &lower, fade))?;
                 self.buf.queue(Print(LOWER_HALF_BLOCK))?;
                 pixel.saturation += self.saturation_step as f32;
@@ -50,7 +58,7 @@ impl SVPicker {
             pixel = Hsv::new(
                 pixel.hue.into_positive_degrees(),
                 0.0,
-                pixel.value - (self.value_step * 2.0) as f32,
+                pixel.value - self.value_step as f32,
             );
             self.buf.queue(MoveLeft(self.width as u16))?;
             self.buf.queue(MoveDown(1))?;
@@ -68,7 +76,7 @@ impl SVPicker {
         Ok(Hsv::new(
             RgbHue::from_degrees(self.selected_color.hue.into_positive_degrees()),
             x as f32 * self.saturation_step as f32,
-            1.0 - (y as f32 * self.value_step as f32 * 2.0),
+            1.0 - y as f32 * (self.value_step) as f32,
         ))
     }
 
