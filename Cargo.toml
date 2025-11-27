@@ -13,3 +13,10 @@ arboard = { version = "3.6.1", features = ["wayland-data-control"] }
 [lib]
 name = "tui_color_picker"
 path = "src/lib.rs"
+
+# Optimization settings for smaller binary size
+[profile.release]
+opt-level = "z"
+strip = true
+lto = true
+panic = "abort"

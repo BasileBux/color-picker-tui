@@ -4,15 +4,17 @@ use crossterm::event::*;
 use std::time::Duration;
 use tui_color_picker::constants::*;
 use tui_color_picker::state::*;
-use tui_color_picker::ui::*;
+use tui_color_picker::ui::hue_picker::HuePicker;
+use tui_color_picker::ui::inputs::Inputs;
+use tui_color_picker::ui::saturation_value_picker::SaturationValuePicker;
 
 fn main() -> io::Result<()> {
     let (term_width, term_height) = crossterm::terminal::size()?;
 
     let mut app = State::new(
-        sv_picker::SVPicker::new(SV_PICKER_REL_POS, SV_PICKER_WIDTH, SV_PICKER_HEIGHT),
-        hue_picker::HuePicker::new(HUE_PICKER_REL_POS, HUE_PICKER_WIDTH, HUE_PICKER_HEIGHT),
-        inputs::Inputs::new(INPUTS_REL_POS),
+        SaturationValuePicker::new(SV_PICKER_REL_POS, SV_PICKER_WIDTH, SV_PICKER_HEIGHT),
+        HuePicker::new(HUE_PICKER_REL_POS, HUE_PICKER_WIDTH, HUE_PICKER_HEIGHT),
+        Inputs::new(INPUTS_REL_POS),
         term_width,
         term_height,
     )?;

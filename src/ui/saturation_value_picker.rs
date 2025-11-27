@@ -11,7 +11,7 @@ use crossterm::{
 
 use crate::crossterm_commands::*;
 
-pub struct SVPicker {
+pub struct SaturationValuePicker {
     pub buf: Vec<u8>,
     pub pos: Vec2,
     pub selected_color: Hsv,
@@ -21,9 +21,9 @@ pub struct SVPicker {
     pub height: u32,
 }
 
-impl SVPicker {
+impl SaturationValuePicker {
     pub fn new(pos: Vec2, width: u32, height: u32) -> Self {
-        SVPicker {
+        SaturationValuePicker {
             width,
             height,
             pos,

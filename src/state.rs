@@ -1,11 +1,14 @@
 use crate::clipboard::{paste::*, ui::*};
 use crate::types::*;
+use crate::ui::hue_picker::HuePicker;
+use crate::ui::inputs::{Focus, Inputs};
+use crate::ui::saturation_value_picker::SaturationValuePicker;
+use crate::ui::value_display::draw_value_display;
 use crate::utils::*;
 use std::io::{self, Write, stdout};
 
 use crate::constants::*;
 use crate::crossterm_commands::*;
-use crate::ui::*;
 use crossterm::cursor::MoveTo;
 use crossterm::style::Print;
 use crossterm::{
@@ -19,9 +22,9 @@ use palette::RgbHue;
 use palette::SetHue;
 
 pub struct State {
-    pub sv_picker: sv_picker::SVPicker,
-    pub hue_picker: hue_picker::HuePicker,
-    pub inputs: inputs::Inputs,
+    pub sv_picker: SaturationValuePicker,
+    pub hue_picker: HuePicker,
+    pub inputs: Inputs,
     pub offset: Vec2,
     pub term_too_small: bool,
     pub flags: u8,
@@ -49,9 +52,9 @@ impl Drop for State {
 impl State {
     /// Only use this method to create a new State instance.
     pub fn new(
-        sv_picker: sv_picker::SVPicker,
-        hue_picker: hue_picker::HuePicker,
-        inputs: inputs::Inputs,
+        sv_picker: SaturationValuePicker,
+        hue_picker: HuePicker,
+        inputs: Inputs,
         terminal_width: u16,
         terminal_height: u16,
     ) -> io::Result<Self> {
@@ -82,7 +85,7 @@ impl State {
     pub fn draw(&mut self, fade: bool) -> io::Result<()> {
         self.sv_picker.draw(fade)?;
         self.hue_picker.draw(fade)?;
-        value_display::draw_value_display(
+        draw_value_display(
             &(VALUE_DISPLAY_REL_POS + self.offset),
             &self.sv_picker.selected_color,
             fade,
@@ -111,7 +114,7 @@ impl State {
             Component::SVPicker => self.sv_picker.draw(fade),
             Component::HuePicker => self.hue_picker.draw(fade),
             Component::Inputs => self.inputs.draw(&self.sv_picker.selected_color, fade),
-            Component::ValueDisplay => value_display::draw_value_display(
+            Component::ValueDisplay => draw_value_display(
                 &(VALUE_DISPLAY_REL_POS + self.offset),
                 &self.sv_picker.selected_color,
                 fade,
@@ -208,36 +211,36 @@ impl State {
         match self.inputs.value_input(event.code) {
             Some((focus, value)) => {
                 match focus {
-                    inputs::Focus::Hex => {
+                    Focus::Hex => {
                         let r = ((value >> 16) & 0xFF) as u8;
                         let g = ((value >> 8) & 0xFF) as u8;
                         let b = (value & 0xFF) as u8;
                         self.sv_picker.selected_color = hsv_from_rgb(r, g, b)
                     }
-                    inputs::Focus::R => {
+                    Focus::R => {
                         let (_, g, b) = rgb_from_hsv(&self.sv_picker.selected_color);
                         let r = value.min(255) as u8;
                         self.sv_picker.selected_color = hsv_from_rgb(r, g, b)
                     }
-                    inputs::Focus::G => {
+                    Focus::G => {
                         let (r, _, b) = rgb_from_hsv(&self.sv_picker.selected_color);
                         let g = value.min(255) as u8;
                         self.sv_picker.selected_color = hsv_from_rgb(r, g, b)
                     }
-                    inputs::Focus::B => {
+                    Focus::B => {
                         let (r, g, _) = rgb_from_hsv(&self.sv_picker.selected_color);
                         let b = value.min(255) as u8;
                         self.sv_picker.selected_color = hsv_from_rgb(r, g, b)
                     }
-                    inputs::Focus::H => {
+                    Focus::H => {
                         self.sv_picker
                             .selected_color
                             .set_hue(RgbHue::from_degrees(value as f32));
                     }
-                    inputs::Focus::S => {
+                    Focus::S => {
                         self.sv_picker.selected_color.saturation = (value.min(100) as f32) / 100.0;
                     }
-                    inputs::Focus::V => {
+                    Focus::V => {
                         self.sv_picker.selected_color.value = (value.min(100) as f32) / 100.0;
                     }
                     _ => {}
@@ -245,7 +248,7 @@ impl State {
                 self.draw(false)?;
             }
             None => {
-                if self.inputs.focus == inputs::Focus::NONE {
+                if self.inputs.focus == Focus::NONE {
                     let _ = self.inputs.lose_focus();
                     self.draw_component(Component::Inputs, false)?;
                 }
