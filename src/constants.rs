@@ -34,8 +34,8 @@ pub const FADED_TEXT_COLOR: CustomRgb = CustomRgb {
 pub const VALUE_DISPLAY_REL_POS: Vec2 = Vec2 { x: 0, y: 0 };
 
 pub const SV_PICKER_REL_POS: Vec2 = Vec2 { x: 0, y: 2 };
-pub const SV_PICKER_HEIGHT: u32 = 30;
 pub const SV_PICKER_WIDTH: u32 = 60;
+pub const SV_PICKER_HEIGHT: u32 = SV_PICKER_WIDTH / 2;
 
 pub const HUE_PICKER_REL_POS: Vec2 = Vec2 {
     x: SV_PICKER_WIDTH + 3,
