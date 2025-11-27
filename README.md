@@ -43,6 +43,12 @@ I don't do packaging or releases. If you want to use it, you will need to build
 it from source. Just [install rust stuff](https://rust-lang.org/tools/install/)
 and run `cargo build --release` and you will get your binary.
 
+If using Nix, you can just run:
+```bash
+nix run github:basilebux/color-picker-tui
+```
+or install it in your flake like any other flake package.
+
 The TUI draws a big square for color selection. This square could not appear
 completely square depending on your font. For better looking squares, I
 recommend using a font which has a 1:2 ratio such as
