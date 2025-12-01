@@ -58,6 +58,26 @@ pub fn clear_clipboard_format_selector(pos: Vec2) -> io::Result<()> {
     )
 }
 
+pub fn draw_copied_confirmation(pos: Vec2, fade: bool) -> io::Result<()> {
+    const CONFIRMATION_TEXT: &str = "Copied to clipboard!";
+    execute!(
+        stdout(),
+        ResetDefaultColors(fade),
+        MoveTo(pos.x as u16, pos.y as u16),
+        PrintBold(CONFIRMATION_TEXT),
+    )
+}
+
+pub fn draw_pasted_confirmation(pos: Vec2, fade: bool) -> io::Result<()> {
+    const CONFIRMATION_TEXT: &str = "Pasted from clipboard!";
+    execute!(
+        stdout(),
+        ResetDefaultColors(fade),
+        MoveTo(pos.x as u16, pos.y as u16),
+        PrintBold(CONFIRMATION_TEXT),
+    )
+}
+
 pub fn draw_clipboard_format_selector(pos: Vec2, mut color: Hsv, fade: bool) -> io::Result<()> {
     const TITLE: &str = "Select Copy Format:";
 

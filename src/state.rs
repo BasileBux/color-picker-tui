@@ -39,6 +39,8 @@ pub enum Component {
 
 pub const EXIT_FLAG: u8 = 1 << 0;
 pub const COPY_FLAG: u8 = 1 << 1;
+pub const COPY_CONFIRMED_FLAG: u8 = 1 << 2;
+pub const PASTE_CONFIRMED_FLAG: u8 = 1 << 3;
 
 impl Drop for State {
     /// Cleans up the terminal state when the application exits.
@@ -182,6 +184,8 @@ impl State {
             handle_copy_input_format_selection_input(event, self.sv_picker.selected_color)?;
             self.flags &= !COPY_FLAG;
             clear_clipboard_format_selector(COPY_FORMAT_SELECTOR_RES_POS + self.offset)?;
+            draw_copied_confirmation(COPY_FORMAT_SELECTOR_RES_POS + self.offset, false)?;
+            self.flags |= COPY_CONFIRMED_FLAG;
             return Ok(());
         }
 
@@ -205,6 +209,8 @@ impl State {
             if let Some(clipboard_content) = clipboard_paste() {
                 self.sv_picker.selected_color = clipboard_content;
                 self.draw(false)?;
+                draw_pasted_confirmation(COPY_FORMAT_SELECTOR_RES_POS + self.offset, false)?;
+                self.flags |= PASTE_CONFIRMED_FLAG;
             }
         }
 

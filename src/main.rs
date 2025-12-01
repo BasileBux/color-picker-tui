@@ -2,6 +2,7 @@ use std::io::{self};
 
 use crossterm::event::*;
 use std::time::Duration;
+use tui_color_picker::clipboard::ui::clear_clipboard_format_selector;
 use tui_color_picker::constants::*;
 use tui_color_picker::state::*;
 use tui_color_picker::ui::hue_picker::HuePicker;
@@ -24,6 +25,13 @@ fn main() -> io::Result<()> {
 
     loop {
         if poll(Duration::from_millis(100))? {
+            // clear confirmation message after next event
+            if app.flags & COPY_CONFIRMED_FLAG != 0 || app.flags & PASTE_CONFIRMED_FLAG != 0 {
+                clear_clipboard_format_selector(COPY_FORMAT_SELECTOR_RES_POS + app.offset)?;
+                app.flags &= !COPY_CONFIRMED_FLAG;
+                app.flags &= !PASTE_CONFIRMED_FLAG;
+            }
+
             let event = read()?;
             match event {
                 Event::Mouse(event) if !app.term_too_small => {
