@@ -64,6 +64,19 @@ impl Focus {
             Focus::NONE => 0,
         }
     }
+
+    pub fn max_value(&self) -> u32 {
+        match self {
+            Focus::Hex => 0xFFFFFF,
+            Focus::R => 255,
+            Focus::G => 255,
+            Focus::B => 255,
+            Focus::H => 360,
+            Focus::S => 100,
+            Focus::V => 100,
+            Focus::NONE => 0,
+        }
+    }
 }
 
 pub struct Inputs {
@@ -219,23 +232,29 @@ impl Inputs {
             });
             match input {
                 KeyCode::Up => {
-                    if !self.modified {
-                        self.input_str.clear();
-                        self.modified = true;
-                    }
-                    let current_value = self.input_str.parse::<u32>().unwrap_or(0);
-                    if current_value < 255 {
+                    let current_value = self.input_str.trim().parse::<u32>().unwrap_or(0);
+                    if current_value < self.focus.max_value() {
                         self.input_str = format!("{}", current_value + 1);
                     }
                 }
                 KeyCode::Down => {
-                    if !self.modified {
-                        self.input_str.clear();
-                        self.modified = true;
-                    }
-                    let current_value = self.input_str.parse::<u32>().unwrap_or(0);
+                    let current_value = self.input_str.trim().parse::<u32>().unwrap_or(0);
                     if current_value > 0 {
                         self.input_str = format!("{}", current_value - 1);
+                    }
+                }
+                KeyCode::Left => {
+                    let current_value = self.input_str.trim().parse::<u32>().unwrap_or(0);
+                    if current_value >= 10 {
+                        self.input_str = format!("{}", current_value - 10);
+                    } else {
+                        self.input_str = "0".to_string();
+                    }
+                }
+                KeyCode::Right => {
+                    let current_value = self.input_str.trim().parse::<u32>().unwrap_or(0);
+                    if current_value <= self.focus.max_value() - 10 {
+                        self.input_str = format!("{}", current_value + 10);
                     }
                 }
                 _ => {}
@@ -258,7 +277,8 @@ impl Inputs {
     }
 
     pub fn gain_focus(&mut self, color: &Hsv) -> io::Result<()> {
-        if self.focus != Focus::NONE { // NOTE: not sure about this behavior
+        if self.focus != Focus::NONE {
+            // NOTE: not sure about this behavior
             self.draw(color, false)?;
         }
         let (r, g, b) = rgb_from_hsv(&color);
