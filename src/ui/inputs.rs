@@ -111,45 +111,34 @@ impl Inputs {
 
         self.buf.queue(PrintBold("R "))?;
         self.buf.queue(Print(format!("{:>3}", r)))?;
-        // self.buf.queue(Print(format!("R {:>3}", r)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
         self.buf.queue(PrintBold("G "))?;
         self.buf.queue(Print(format!("{:>3}", g)))?;
-        // self.buf.queue(Print(format!("G {:>3}", g)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
         self.buf.queue(PrintBold("B "))?;
         self.buf.queue(Print(format!("{:>3}", b)))?;
-        // self.buf.queue(Print(format!("B {:>3}", b)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(2))?;
 
         self.buf.queue(PrintBold("H "))?;
         self.buf
             .queue(Print(format!("{:>3.0}", color.hue.into_positive_degrees())))?;
-        // self.buf.queue(Print(format!(
-        //     "H {:>3.0}",
-        //     color.hue.into_positive_degrees()
-        // )))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
         self.buf.queue(PrintBold("S "))?;
         self.buf
             .queue(Print(format!("{:>3.0}", color.saturation * 100.0)))?;
-        // self.buf
-        //     .queue(Print(format!("S {:>3.0}", color.saturation * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
         self.buf.queue(PrintBold("V "))?;
         self.buf
             .queue(Print(format!("{:>3.0}", color.value * 100.0)))?;
-        // self.buf
-        //     .queue(Print(format!("V {:>3.0}", color.value * 100.0)))?;
         self.buf.queue(MoveLeft(5))?;
         self.buf.queue(MoveDown(1))?;
 
@@ -228,6 +217,29 @@ impl Inputs {
                     self.input_str.push(c);
                 }
             });
+            match input {
+                KeyCode::Up => {
+                    if !self.modified {
+                        self.input_str.clear();
+                        self.modified = true;
+                    }
+                    let current_value = self.input_str.parse::<u32>().unwrap_or(0);
+                    if current_value < 255 {
+                        self.input_str = format!("{}", current_value + 1);
+                    }
+                }
+                KeyCode::Down => {
+                    if !self.modified {
+                        self.input_str.clear();
+                        self.modified = true;
+                    }
+                    let current_value = self.input_str.parse::<u32>().unwrap_or(0);
+                    if current_value > 0 {
+                        self.input_str = format!("{}", current_value - 1);
+                    }
+                }
+                _ => {}
+            }
         }
 
         let _ = execute!(
@@ -246,6 +258,9 @@ impl Inputs {
     }
 
     pub fn gain_focus(&mut self, color: &Hsv) -> io::Result<()> {
+        if self.focus != Focus::NONE { // NOTE: not sure about this behavior
+            self.draw(color, false)?;
+        }
         let (r, g, b) = rgb_from_hsv(&color);
         match self.focus {
             Focus::Hex => {
